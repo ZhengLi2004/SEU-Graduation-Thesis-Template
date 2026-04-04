@@ -1,0 +1,65 @@
+# LaTeX build artifacts
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.fdb_latexmk
+*.fls
+*.fmt
+*.fot
+*.lof
+*.log
+*.lot
+*.nav
+*.out
+*.run.xml
+*.snm
+*.synctex.gz
+*.synctex(busy)
+*.toc
+*.vrb
+*.xdv
+*.acn
+*.acr
+*.alg
+*.glg
+*.glo
+*.gls
+*.glsdefs
+*.idx
+*.ilg
+*.ind
+*.ist
+*.loa
+*.lol
+*.maf
+*.mtc*
+*.nlo
+*.nls
+*.thm
+*.xdy
+
+# Generated PDFs
+/main.pdf
+
+# Root-level comparison and debug exports
+/cur*.png
+/current*.png
+/main_full-*.png
+/main_live-*.png
+/ref*.png
+
+# Editor and OS noise
+.DS_Store
+Thumbs.db
+Desktop.ini
+.idea/
+.vscode/
+*.swp
+*.swo
+*.tmp
+*.bak
+
+# Extracted helper notes
+docs
+*.txt
