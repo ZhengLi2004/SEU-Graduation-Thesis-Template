@@ -12,9 +12,9 @@
   left=2cm,
   right=2cm,
   bindingoffset=0.5cm,
-  headheight=14pt,
-  headsep=0.5cm,
-  footskip=1.25cm
+  headheight=9pt,
+  headsep=0.18cm,
+  footskip=0.45cm
 ]{geometry}
 \RequirePackage{fancyhdr}
 \RequirePackage{graphicx}
@@ -139,37 +139,106 @@
     pages .tl_set:N = \l_seu_ai_pages_tl,
   }
 
+\cs_new_protected:Npn \seu_font_missing_error:nn #1#2
+  {
+    \ClassError { seuthesis }
+      { Required~font~'#1'~not~found }
+      {
+        This~template~uses~strict~font~matching.
+        Non-distributable~fonts~must~be~installed~in~the~operating~system.
+        Distributable/open-source~fonts~must~be~placed~under~the~relative~directory~'fonts/'.
+        Lookup~scope:~#2.
+      }
+  }
+
+\cs_new_protected:Npn \seu_require_system_main_font:n #1
+  {
+    \IfFontExistsTF { #1 }
+      { \setmainfont { #1 } [ Ligatures = TeX ] }
+      { \seu_font_missing_error:nn {#1} {system-font-name lookup only} }
+  }
+
+\cs_new_protected:Npn \seu_require_system_cjk_main_font:n #1
+  {
+    \IfFontExistsTF { #1 }
+      {
+        \setCJKmainfont { #1 }
+        \setCJKfamilyfont { zhsong } { #1 }
+      }
+      { \seu_font_missing_error:nn {#1} {system-font-name lookup only} }
+  }
+
+\cs_new_protected:Npn \seu_require_system_cjk_sans_font:n #1
+  {
+    \IfFontExistsTF { #1 }
+      {
+        \setCJKsansfont { #1 }
+        \setCJKfamilyfont { zhhei } { #1 }
+      }
+      { \seu_font_missing_error:nn {#1} {system-font-name lookup only} }
+  }
+
+\cs_new_protected:Npn \seu_require_system_cjk_family_font:nn #1#2
+  {
+    \IfFontExistsTF { #2 }
+      { \setCJKfamilyfont { #1 } { #2 } }
+      { \seu_font_missing_error:nn {#2} {system-font-name lookup only} }
+  }
+
+\cs_new_protected:Npn \seu_require_project_font_file:n #1
+  {
+    \file_if_exist:nTF { fonts/#1 }
+      { }
+      { \seu_font_missing_error:nn {#1} {relative~directory~'fonts/' only} }
+  }
+
 \cs_new_protected:Npn \seu_apply_default_fonts:
   {
-    \setmainfont
-      [
-        Path = C:/Windows/Fonts/,
-        Extension = .ttf,
-        UprightFont = *,
-        BoldFont = *bd,
-        ItalicFont = *i,
-        BoldItalicFont = *bi
-      ]
-      { times }
-    \setCJKmainfont
-      [
-        BoldFont = SimHei,
-        ItalicFont = KaiTi,
-        BoldItalicFont = KaiTi
-      ]
-      { SimSun }
-    \setCJKsansfont { SimHei }
-    \setCJKmonofont { FangSong }
-    \setCJKfamilyfont { zhsong }
-      [
-        BoldFont = SimHei,
-        ItalicFont = KaiTi,
-        BoldItalicFont = KaiTi
-      ]
-      { SimSun }
-    \setCJKfamilyfont { zhhei } { SimHei }
-    \setCJKfamilyfont { zhkai } { KaiTi }
-    \setCJKfamilyfont { zhfs } { FangSong }
+    % - no absolute paths
+    % - no fallback / substitution / synthetic bold-slant
+    % - non-distributable fonts: search system fonts only
+    % - distributable fonts: search relative directory fonts/ only
+    % Exact fonts required by the Word template.
+
+    \seu_require_system_main_font:n { Times~New~Roman }
+
+    \IfFontExistsTF { SimSun }
+      { \seu_require_system_cjk_main_font:n { SimSun } }
+      {
+        \IfFontExistsTF { 宋体 }
+          { \seu_require_system_cjk_main_font:n { 宋体 } }
+          { \seu_font_missing_error:nn { SimSun~or~宋体 } {system-font-name lookup only} }
+      }
+
+    \IfFontExistsTF { SimHei }
+      { \seu_require_system_cjk_sans_font:n { SimHei } }
+      {
+        \IfFontExistsTF { 黑体 }
+          { \seu_require_system_cjk_sans_font:n { 黑体 } }
+          { \seu_font_missing_error:nn { SimHei~or~黑体 } {system-font-name lookup only} }
+      }
+
+    \IfFontExistsTF { KaiTi }
+      { \seu_require_system_cjk_family_font:nn { zhkai } { KaiTi } }
+      {
+        \IfFontExistsTF { 楷体 }
+          { \seu_require_system_cjk_family_font:nn { zhkai } { 楷体 } }
+          { \seu_font_missing_error:nn { KaiTi~or~楷体 } {system-font-name lookup only} }
+      }
+
+    \IfFontExistsTF { FangSong }
+      {
+        \setCJKmonofont { FangSong }
+        \setCJKfamilyfont { zhfs } { FangSong }
+      }
+      {
+        \IfFontExistsTF { 仿宋 }
+          {
+            \setCJKmonofont { 仿宋 }
+            \setCJKfamilyfont { zhfs } { 仿宋 }
+          }
+          { \seu_font_missing_error:nn { FangSong~or~仿宋 } {system-font-name lookup only} }
+      }
   }
 
 \cs_new_protected:Npn \seu_apply_body_style:
@@ -715,53 +784,16 @@
 \providecommand{\heiti}{\CJKfamily{zhhei}}
 \providecommand{\kaishu}{\CJKfamily{zhkai}}
 \providecommand{\fangsong}{\CJKfamily{zhfs}}
-\IfFontExistsTF{思源黑体 CN Medium}
-  {\newCJKfontfamily\seucoverlabelcjk{思源黑体 CN Medium}}
-  {
-    \IfFileExists{C:/Windows/Fonts/NotoSansSC-Medium.ttf}
-      {
-        \newCJKfontfamily\seucoverlabelcjk
-          [
-            Path = C:/Windows/Fonts/,
-            Extension = .ttf,
-            UprightFont = *
-          ]
-          {NotoSansSC-Medium}
-      }
-      {\newCJKfontfamily\seucoverlabelcjk{SimHei}}
-  }
 
 \newcommand{\seucovertitlefont}{\heiti\fontsize{22pt}{46pt}\selectfont}
 \newcommand{\seucoversubtitlefont}{\fontsize{16pt}{46pt}\selectfont}
-\newcommand{\seucoverlabelfont}{\seucoverlabelcjk\fontsize{14pt}{14pt}\selectfont}
+\newcommand{\seucoverlabelfont}{\heiti\fontsize{14pt}{14pt}\selectfont}
 \newcommand{\seucovervaluefont}{\songti\fontsize{18pt}{18pt}\selectfont}
-\IfFileExists{C:/Windows/Fonts/NotoSerifSC-Bold.ttf}
-  {
-    \newCJKfontfamily\seuaiboldvaluecjk
-      [
-        Path = C:/Windows/Fonts/,
-        Extension = .ttf,
-        UprightFont = *
-      ]
-      {NotoSerifSC-Bold}
-  }
-  {\newcommand{\seuaiboldvaluecjk}{\bfseries}}
-\IfFileExists{C:/Windows/Fonts/NotoSansSC-Bold.ttf}
-  {
-    \newCJKfontfamily\seuaiboldsanscjk
-      [
-        Path = C:/Windows/Fonts/,
-        Extension = .ttf,
-        UprightFont = *
-      ]
-      {NotoSansSC-Bold}
-  }
-  {\newcommand{\seuaiboldsanscjk}{\heiti}}
-\newcommand{\seuaititlefont}{\seuaiboldsanscjk\fontsize{16pt}{18pt}\selectfont}
-\newcommand{\seuaiheaderfont}{\seuaiboldsanscjk\fontsize{10.5pt}{12pt}\selectfont}
+\newcommand{\seuaititlefont}{\heiti\bfseries\fontsize{16pt}{18pt}\selectfont}
+\newcommand{\seuaiheaderfont}{\heiti\fontsize{10.5pt}{12pt}\selectfont}
 \newcommand{\seuaibodyfont}{\songti\fontsize{10.5pt}{12pt}\selectfont}
 \newcommand{\seuaibodylongfont}{\songti\fontsize{10.5pt}{13.9pt}\selectfont}
-\newcommand{\seuaiboldvaluefont}{\seuaiboldvaluecjk\fontsize{10.5pt}{12pt}\selectfont}
+\newcommand{\seuaiboldvaluefont}{\songti\bfseries\fontsize{10.5pt}{12pt}\selectfont}
 
 \fancypagestyle{seublank}{
   \fancyhf{}
@@ -770,21 +802,21 @@
 }
 \fancypagestyle{seupreface}{
   \fancyhf{}
-  \fancyfoot[C]{\normalfont\seuxiaowu \Roman{page}}
+  \fancyfoot[C]{\songti\seuxiaowu \Roman{page}}
   \renewcommand{\headrulewidth}{0pt}
   \renewcommand{\footrulewidth}{0pt}
 }
 \fancypagestyle{seumain}{
   \fancyhf{}
-  \fancyhead[C]{\normalfont\seuxiaowu 东南大学本科毕业设计（论文）}
-  \fancyfoot[C]{\normalfont\seuxiaowu \thepage}
+  \fancyhead[C]{\songti\seuxiaowu 东南大学本科毕业设计（论文）}
+  \fancyfoot[C]{\songti\seuxiaowu \thepage}
   \renewcommand{\headrulewidth}{0pt}
   \renewcommand{\footrulewidth}{0pt}
 }
 \fancypagestyle{plain}{
   \fancyhf{}
-  \fancyhead[C]{\normalfont\seuxiaowu 东南大学本科毕业设计（论文）}
-  \fancyfoot[C]{\normalfont\seuxiaowu \thepage}
+  \fancyhead[C]{\songti\seuxiaowu 东南大学本科毕业设计（论文）}
+  \fancyfoot[C]{\songti\seuxiaowu \thepage}
   \renewcommand{\headrulewidth}{0pt}
   \renewcommand{\footrulewidth}{0pt}
 }
@@ -844,6 +876,7 @@
   \chapter*{参考文献}
   \addcontentsline{toc}{chapter}{参考文献}
 }
+\renewcommand*{\bibfont}{\songti\seuwuhao}
 
 \ctexset{
   chapter = {
@@ -852,16 +885,16 @@
     aftername = \quad,
     beforeskip = 0pt,
     afterskip = 18pt,
-    format = \centering\heiti\seusanhao
+    format = \centering\heiti\bfseries\seusanhao
   },
   section = {
-    beforeskip = 12pt,
+    beforeskip = 6pt,
     afterskip = 6pt,
     format = \heiti\seusihao
   },
   subsection = {
-    beforeskip = 10pt,
-    afterskip = 4pt,
+    beforeskip = 6pt,
+    afterskip = 3pt,
     format = \songti\normalfont\seuxiaosi
   }
 }
@@ -870,23 +903,23 @@
 \renewcommand{\contentsname}{目\hspace{2em}录}
 \renewcommand{\cfttoctitlefont}{\hfill\seusanhao\bfseries}
 \renewcommand{\cftaftertoctitle}{\hfill}
-\renewcommand{\cftchapfont}{\seuxiaosi}
-\renewcommand{\cftsecfont}{\seuxiaosi}
-\renewcommand{\cftsubsecfont}{\seuxiaosi}
-\renewcommand{\cftchappagefont}{\seuxiaosi}
-\renewcommand{\cftsecpagefont}{\seuxiaosi}
-\renewcommand{\cftsubsecpagefont}{\seuxiaosi}
+\renewcommand{\cftchapfont}{\songti\seuxiaosi}
+\renewcommand{\cftsecfont}{\songti\seuxiaosi}
+\renewcommand{\cftsubsecfont}{\songti\seuxiaosi}
+\renewcommand{\cftchappagefont}{\songti\seuxiaosi}
+\renewcommand{\cftsecpagefont}{\songti\seuxiaosi}
+\renewcommand{\cftsubsecpagefont}{\songti\seuxiaosi}
 \setlength{\cftbeforechapskip}{0pt}
 \setlength{\cftbeforesecskip}{0pt}
 \setlength{\cftbeforesubsecskip}{0pt}
-\setlength{\cftchapindent}{0pt}
+\setlength{\cftchapindent}{2\ccwd}
 \setlength{\cftsecindent}{2\ccwd}
-\setlength{\cftsubsecindent}{4\ccwd}
-\setlength{\cftchapnumwidth}{4\ccwd}
-\setlength{\cftsecnumwidth}{4\ccwd}
+\setlength{\cftsubsecindent}{2\ccwd}
+\setlength{\cftchapnumwidth}{6\ccwd}
+\setlength{\cftsecnumwidth}{4.5\ccwd}
 \setlength{\cftsubsecnumwidth}{5\ccwd}
 
-\DeclareCaptionFont{seucaptionfont}{\seuwuhao\songti}
+\DeclareCaptionFont{seucaptionfont}{\songti\seuwuhao\selectfont}
 \captionsetup{
   font=seucaptionfont,
   labelfont=normalfont,
@@ -906,6 +939,21 @@
 \renewcommand{\theequation}{\arabic{chapter}.\arabic{equation}}
 \renewcommand{\thesubfigure}{(\alph{subfigure})}
 \renewcommand{\thesubtable}{(\alph{subtable})}
+
+\makeatletter
+\g@addto@macro\appendix{%
+  \ctexset{%
+    chapter = {%
+      name = {附录,},%
+      number = \Alph{chapter},%
+      aftername = \space,%
+      beforeskip = 0pt,%
+      afterskip = 18pt,%
+      format = \centering\heiti\bfseries\seusanhao%
+    }%
+  }%
+}
+\makeatother
 
 \setlength{\textfloatsep}{\baselineskip}
 \setlength{\intextsep}{\baselineskip}
