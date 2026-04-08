@@ -12,7 +12,7 @@
   left=2cm,
   right=2cm,
   bindingoffset=0.5cm,
-  headheight=9pt,
+  headheight=11pt,
   headsep=0.18cm,
   footskip=0.45cm
 ]{geometry}
@@ -25,6 +25,7 @@
 \RequirePackage{expl3}
 \RequirePackage{eso-pic}
 \RequirePackage{tikz}
+\usetikzlibrary{calc}
 \RequirePackage{tikzpagenodes}
 \RequirePackage{tabularray}
 \RequirePackage{array}
@@ -70,6 +71,7 @@
 \tl_new:N \g_seu_authorization_author_date_tl
 \tl_new:N \g_seu_authorization_supervisor_date_tl
 \tl_new:N \g_seu_ai_used_tl
+\tl_new:N \g_seu_ai_subject_tl
 \tl_new:N \g_seu_ai_student_date_tl
 \tl_new:N \g_seu_ai_teacher_date_tl
 \tl_new:N \g_seu_ai_teacher_comment_tl
@@ -99,7 +101,7 @@
 \tl_gset:Nn \g_seu_degree_image_tl { degree.jpg }
 \tl_gset:Nn \g_seu_cover_bg_image_tl { cover-1.png }
 \tl_gset:Nn \g_seu_motto_image_tl { cover-2.png }
-\tl_gset:Nn \g_seu_ai_used_tl { no }
+\tl_gset:Nn \g_seu_ai_used_tl { unset }
 
 \keys_define:nn { seu/setup }
   {
@@ -121,13 +123,15 @@
       \g_seu_authorization_author_date_tl,
     authorization_supervisor_date .tl_gset:N =
       \g_seu_authorization_supervisor_date_tl,
+    ai_subject .tl_gset:N = \g_seu_ai_subject_tl,
     ai_student_date .tl_gset:N = \g_seu_ai_student_date_tl,
     ai_teacher_date .tl_gset:N = \g_seu_ai_teacher_date_tl,
     ai_teacher_comment .tl_gset:N = \g_seu_ai_teacher_comment_tl,
     ai_used .choice:,
+    ai_used / unset .code:n = { \tl_gset:Nn \g_seu_ai_used_tl { unset } },
     ai_used / yes .code:n = { \tl_gset:Nn \g_seu_ai_used_tl { yes } },
     ai_used / no .code:n = { \tl_gset:Nn \g_seu_ai_used_tl { no } },
-    ai_used .initial:n = no,
+    ai_used .initial:n = unset,
   }
 
 \keys_define:nn { seu/aiitem }
@@ -185,20 +189,47 @@
       { \seu_font_missing_error:nn {#2} {system-font-name lookup only} }
   }
 
-\cs_new_protected:Npn \seu_require_project_font_file:n #1
+\cs_new_protected:Npn \seu_set_cover_label_font:
   {
-    \file_if_exist:nTF { fonts/#1 }
-      { }
-      { \seu_font_missing_error:nn {#1} {relative~directory~'fonts/' only} }
+    \file_if_exist:nTF { fonts/SourceHanSansSC-Medium.otf }
+      {
+        \setCJKfamilyfont { seucovershmedium }
+          [
+            Path = {./fonts/},
+            Extension = .otf,
+            UprightFont = *
+          ]
+          { SourceHanSansSC-Medium }
+      }
+      {
+        \file_if_exist:nTF { fonts/SourceHanSansCN-Medium.otf }
+          {
+            \setCJKfamilyfont { seucovershmedium }
+              [
+                Path = {./fonts/},
+                Extension = .otf,
+                UprightFont = *
+              ]
+              { SourceHanSansCN-Medium }
+          }
+          {
+            \seu_font_missing_error:nn
+              { SourceHanSansSC-Medium.otf~or~SourceHanSansCN-Medium.otf }
+              {relative~directory~'fonts/' only}
+          }
+      }
   }
 
 \cs_new_protected:Npn \seu_apply_default_fonts:
   {
+    % Strict mode:
     % - no absolute paths
     % - no fallback / substitution / synthetic bold-slant
     % - non-distributable fonts: search system fonts only
     % - distributable fonts: search relative directory fonts/ only
     % Exact fonts required by the Word template.
+
+    \seu_set_cover_label_font:
 
     \seu_require_system_main_font:n { Times~New~Roman }
 
@@ -259,30 +290,73 @@
     \underline{\hspace{1.4em}}日
   }
 
+\cs_new:Npn \seu_statement_signature_rule:
+  { \underline{\makebox[3.15cm][c]{\strut}} }
+
+\cs_new:Npn \seu_statement_date_placeholder:
+  {
+    \underline{\makebox[1.05cm][c]{\strut}}年\hspace{0.28em}
+    \underline{\makebox[0.95cm][c]{\strut}}月\hspace{0.28em}
+    \underline{\makebox[0.95cm][c]{\strut}}日
+  }
+
+\cs_new:Npn \seu_display_or_statement_date:N #1
+  { \tl_if_blank:VTF #1 { \seu_statement_date_placeholder: } { \tl_use:N #1 } }
+
 \cs_new:Npn \seu_cover_rule_box:nn #1#2
   {
-    \parbox[c][1.62cm][c]{#1}
+    \parbox[c][1.84cm][c]{#1}
       {
-        \centering #2 \par
-        \vspace{0.06cm}
-        \hrule height 0.4pt
+        \centering
+        \vbox to 1.84cm
+          {
+            \vfil
+            \hbox to #1 { \hfil #2 \hfil }
+            \vspace{0.17cm}
+            \hrule height 0.2pt
+          }
+      }
+  }
+
+\cs_new:Npn \seu_cover_note_box:nn #1#2
+  {
+    \parbox[c][1.20cm][c]{#1}
+      {
+        \centering
+        \vbox to 1.20cm
+          {
+            \vfil
+            \hbox to #1 { \hfil #2 \hfil }
+            \vspace{0.14cm}
+            \hrule height 0.2pt
+          }
       }
   }
 
 \cs_new:Npn \seu_cover_label:n #1
-  { \makebox[3.43cm][l]{\seucoverlabelfont #1} }
+  {
+    \parbox[c][1.00cm][c]{3.436cm}
+      {
+        \vbox to 1.00cm
+          {
+            \vfil
+            \hbox to 3.436cm { \seucoverlabelfont #1 \hfil }
+            \vfil
+          }
+      }
+  }
 
 \cs_new:Npn \seu_cover_value:n #1
   {
-    \parbox[c][0.80cm][c]{7.99cm}
+    \parbox[c][1.00cm][c]{7.992cm}
       {
         \centering
-        \vbox to 0.80cm
+        \vbox to 1.00cm
           {
             \vfil
-            \hbox to 7.70cm { \hfil \seucovervaluefont #1 \strut \hfil }
-            \vspace{0.04cm}
-            \hrule height 0.4pt width 7.70cm
+            \hbox to 7.992cm { \hfil \seucovervaluefont #1 \strut \hfil }
+            \vspace{0.14cm}
+            \hrule height 0.2pt width 7.992cm
           }
       }
   }
@@ -301,6 +375,133 @@
 
 \cs_new:Npn \seu_no_box:
   { \exp_args:NV \seu_checkbox:nn \g_seu_ai_used_tl { no } }
+
+\cs_new:Npn \seu_highlight_label:n #1
+  {
+    \tikz[baseline=(seulabel.base)]
+      \node[
+        fill=yellow!60,
+        inner\c_space_tl xsep=0.9pt,
+        inner\c_space_tl ysep=0pt,
+        outer\c_space_tl sep=0pt,
+        anchor=base
+      ] (seulabel) { {\CJKfamily{seucovershmedium}\fontsize{10.5pt}{12pt}\selectfont \strut #1} };
+  }
+
+\cs_new:Npn \seu_ai_subject_display:
+  { \tl_use:N \g_seu_ai_subject_tl }
+
+\cs_new:Npn \seu_ai_tool_display_or_blank:
+  {
+    \tl_if_empty:NTF \g_seu_ai_tool_display_tl
+      { }
+      { \g_seu_ai_tool_display_tl }
+  }
+
+\cs_new:Npn \seu_ai_process_display_or_blank:
+  {
+    \tl_if_empty:NTF \g_seu_ai_process_display_tl
+      { }
+      { \g_seu_ai_process_display_tl }
+  }
+
+\cs_new:Npn \seu_ai_pages_display_or_blank:
+  {
+    \tl_if_empty:NTF \g_seu_ai_pages_display_tl
+      { }
+      { \g_seu_ai_pages_display_tl }
+  }
+
+\cs_new:Npn \seu_ai_yes_tool_block:
+  {
+    \vspace*{0.90cm}
+    \seu_highlight_label:n { 选择是： }\par
+    \str_if_eq:eeTF { \tl_use:N \g_seu_ai_used_tl } { unset }
+      { 示例：\par DeepSeek-V3 }
+      {
+        \str_if_eq:eeTF { \tl_use:N \g_seu_ai_used_tl } { yes }
+          {
+            \tl_if_empty:NTF \g_seu_ai_tool_display_tl
+              { }
+              { \g_seu_ai_tool_display_tl }
+          }
+          { }
+      }
+  }
+
+\cs_new:Npn \seu_ai_yes_scope_block:
+  {
+    \vspace*{0.90cm}
+    \str_if_eq:eeTF { \tl_use:N \g_seu_ai_used_tl } { no }
+      { }
+      {
+        \seu_ai_scope_box:N \l_seu_ai_scope_text_bool ~文本生成及内容修改\par
+        \seu_ai_scope_box:N \l_seu_ai_scope_data_bool ~数据、图表分析、代码调试\par
+        \seu_ai_scope_box:N \l_seu_ai_scope_other_bool ~其他：请具体说明
+        \bool_if:NT \l_seu_ai_scope_other_bool
+          {
+            \tl_if_blank:VF \g_seu_ai_scope_display_tl
+              { \par \g_seu_ai_scope_display_tl }
+          }
+      }
+  }
+
+\cs_new:Npn \seu_ai_yes_process_block:
+  {
+    \vspace*{0.90cm}
+    \str_if_eq:eeTF { \tl_use:N \g_seu_ai_used_tl } { unset }
+      { 示例：\par 输入哪些关键词或主题，指导AI工具生成或修改了哪些内容 }
+      {
+        \str_if_eq:eeTF { \tl_use:N \g_seu_ai_used_tl } { yes }
+          { \seu_ai_process_display_or_blank: }
+          { }
+      }
+  }
+
+\cs_new:Npn \seu_ai_yes_pages_block:
+  {
+    \vspace*{0.90cm}
+    \str_if_eq:eeTF { \tl_use:N \g_seu_ai_used_tl } { unset }
+      { 填写示例：\par 第二章1.1（P5） }
+      {
+        \str_if_eq:eeTF { \tl_use:N \g_seu_ai_used_tl } { yes }
+          { \seu_ai_pages_display_or_blank: }
+          { }
+      }
+  }
+
+\cs_new:Npn \seu_ai_no_block:
+  {
+    \seu_highlight_label:n { 选择否： }\par
+    \str_if_eq:eeTF { \tl_use:N \g_seu_ai_used_tl } { yes }
+      { }
+      {
+        填写示例：在本人毕业论文（设计）的撰写过程中，未使用任何生成式人工智能辅助工具。\par
+        所有内容均由本人独立撰写和创作完成，能够确保学术诚信，不存在任何AI生成的内容。
+      }
+  }
+
+\cs_new:Npn \seu_ai_student_statement_block:
+  {
+    \vspace*{-1.44cm}
+    \hsize=12.168cm
+    \setlength{\parindent}{0.74cm}
+    \noindent
+    本人郑重声明，上述关于生成式人工智能使用情况的陈述真实无误，已对使用此类技术的所有细节进行了全面且诚实的报告。本人深知学术诚信的重要性，如有任何隐瞒或虚假之处，愿承担学术不端行为带来的相关惩处。\par
+    \vspace{1.04cm}
+    \noindent\makebox[\hsize][r]{学生签名：\underline{\makebox[2.85cm][c]{\strut}}}\par
+    \noindent\makebox[\hsize][r]{\seu_display_or_statement_date:N \g_seu_ai_student_date_tl}
+  }
+
+\cs_new:Npn \seu_ai_teacher_statement_block:
+  {
+    \vspace*{-0.55cm}
+    \hsize=12.168cm
+    \noindent 意见：\tl_if_blank:VF \g_seu_ai_teacher_comment_tl { \g_seu_ai_teacher_comment_tl }\par
+    \vspace{0.95cm}
+    \noindent\makebox[\hsize][r]{指导教师签名：\underline{\makebox[2.85cm][c]{\strut}}}\par
+    \noindent\makebox[\hsize][r]{\seu_display_or_statement_date:N \g_seu_ai_teacher_date_tl}
+  }
 
 \cs_new:Npn \seu_tool_version:nn #1#2
   {
@@ -395,6 +596,19 @@
       }
   }
 
+\cs_new_protected:Npn \seu_make_cover_fields_table:
+  {
+    \renewcommand{\arraystretch}{1}
+    \begin{tabular}{@{}m{3.436cm}@{\hspace{0.20cm}}m{7.992cm}@{}}
+    \seu_cover_label:n { 学\hspace{1.8em}号： } & \seu_cover_value:n { \seustudentid } \\[0.22cm]
+    \seu_cover_label:n { 姓\hspace{1.8em}名： } & \seu_cover_value:n { \seuauthor } \\[0.22cm]
+    \seu_cover_label:n { 学\hspace{1.8em}院： } & \seu_cover_value:n { \seuschool } \\[0.22cm]
+    \seu_cover_label:n { 专\hspace{1.8em}业： } & \seu_cover_value:n { \seumajor } \\[0.22cm]
+    \seu_cover_label:n { 指导教师： } & \seu_cover_value:n { \seusupervisor } \\[0.22cm]
+    \seu_cover_label:n { 起止日期： } & \seu_cover_value:n { \seudaterange } \\
+    \end{tabular}
+  }
+
 \cs_new_protected:Npn \seu_preface_title:n #1
   {
     \begin{center}
@@ -407,101 +621,115 @@
   {
     \seublankmatter
     \seu_insert_fullpage_background:n { \seucoverbgimage }
-    \begin{center}
-      \vspace*{0.52cm}
-      \includegraphics[width=8.56cm]{\seulogoimage}\par
-      \vspace{1.10cm}
-      \includegraphics[width=16.48cm]{\seudegreeimage}\par
-      \vspace{1.10cm}
-      \seu_cover_rule_box:nn
-        { 12.0cm }
-        { {\seucovertitlefont \seutitle} }\par
+    \begin{tikzpicture}[remember\c_space_tl picture,overlay]
+      \node[anchor=north,inner\c_space_tl sep=0pt]
+        at ($(current\c_space_tl page.north)+(0cm,-3.94cm)$)
+        {\includegraphics[width=8.56cm]{\seulogoimage}};
+
+      \node[anchor=north,inner\c_space_tl sep=0pt]
+        at ($(current\c_space_tl page.north)+(0cm,-6.84cm)$)
+        {\includegraphics[width=16.48cm]{\seudegreeimage}};
+
+      \node[anchor=north,inner\c_space_tl sep=0pt]
+        at ($(current\c_space_tl page.north)+(0cm,-10.48cm)$)
+        {\seu_cover_rule_box:nn { 12.843cm } { {\seucovertitlefont \seutitle} }};
+
       \tl_if_blank:VTF \g_seu_subtitle_tl
         { }
         {
-          \vspace{0.12cm}
-          \seu_cover_rule_box:nn
-            { 12.0cm }
-            { {\seucoversubtitlefont \seusubtitle} }\par
+          \node[anchor=north,inner\c_space_tl sep=0pt]
+            at ($(current\c_space_tl page.north)+(0cm,-12.69cm)$)
+            {\seu_cover_note_box:nn { 12.843cm } { {\seucovernotefont \seusubtitle} }};
         }
-    \end{center}
 
-    \vspace{0.60cm}
-    \noindent
-    \makebox[\textwidth][c]
-      {
-        \hspace*{0.35cm}
-        \begin{tabular}{@{}p{3.43cm}@{\hspace{0.18cm}}p{7.99cm}@{}}
-        \seu_cover_label:n { 学\hspace{1.8em}号： } & \seu_cover_value:n { \seustudentid } \\
-        \seu_cover_label:n { 姓\hspace{1.8em}名： } & \seu_cover_value:n { \seuauthor } \\
-        \seu_cover_label:n { 学\hspace{1.8em}院： } & \seu_cover_value:n { \seuschool } \\
-        \seu_cover_label:n { 专\hspace{1.8em}业： } & \seu_cover_value:n { \seumajor } \\
-        \seu_cover_label:n { 指导教师： } & \seu_cover_value:n { \seusupervisor } \\
-        \seu_cover_label:n { 起止日期： } & \seu_cover_value:n { \seudaterange } \\
-        \end{tabular}
-      }
+      \node[anchor=north,inner\c_space_tl sep=0pt]
+        at ($(current\c_space_tl page.north)+(0.02cm,-15.05cm)$)
+        {\seu_make_cover_fields_table:};
 
-    \vfill
-    \vspace*{-0.55cm}
-    \begin{center}
-      {\songti\fontsize{12pt}{15pt}\selectfont \seu_display_or_rule:nN { 10em } \g_seu_cover_date_tl \par}
-    \end{center}
+      \node[anchor=north,inner\c_space_tl sep=0pt]
+        at ($(current\c_space_tl page.north)+(0cm,-24.32cm)$)
+        {{\seucoverdatefont \seu_display_or_rule:nN { 10em } \g_seu_cover_date_tl}};
+    \end{tikzpicture}
+    \null
   }
 
 \cs_new_protected:Npn \seu_make_statements_page:
   {
     \seublankmatter
     \begingroup
-    \songti\fontsize{12pt}{15pt}\selectfont
-    \setlength{\parindent}{2em}
-    \vspace*{2.28cm}
-    \begin{center}
-      {\heiti\fontsize{18pt}{15pt}\selectfont 东南大学毕业（设计）论文独创性声明 \par}
-    \end{center}
+    \songti\fontsize{12pt}{13.4pt}\selectfont
+    \setlength{\parindent}{24pt}
+    \begin{tikzpicture}[remember\c_space_tl picture,overlay]
+      \node[anchor=north,inner\c_space_tl sep=0pt]
+        at ($(current\c_space_tl page.north)+(0cm,-4.72cm)$)
+        {{\heiti\fontsize{18pt}{15pt}\selectfont 东南大学毕业（设计）论文独创性声明}};
 
-    \vspace{0.82cm}
-    \begin{center}
-      \begin{minipage}{15.55cm}
-      本人声明所呈交的毕业（设计）论文是我个人在导师指导下进行的研究工作及取得的研究成果。
-      尽我所知，除了文中特别加以标注和致谢的地方外，论文中不包含其他人已经发表或撰写过的研究成果，
-      也不包含为获得东南大学或其它教育机构的学位或证书而使用过的材料。与我一同工作的同志对本研究所做的
-      任何贡献均已在论文中作了明确的说明并表示了谢意。
-      \end{minipage}
-    \end{center}
+      \node[anchor=north,inner\c_space_tl sep=0pt]
+        at ($(current\c_space_tl page.north)+(0.19cm,-6.83cm)$)
+        {
+          \parbox[t]{16.70cm}
+            {
+              \songti\fontsize{12pt}{13.4pt}\selectfont
+              \noindent\hspace*{2em}本人声明所呈交的毕业（设计）论文是我个人在导师指导下进行的研究工作及取得的\\
+              研究成果。尽我所知，除了文中特别加以标注和致谢的地方外，论文中不包含其他人已经\\
+              发表或撰写过的研究成果，也不包含为获得东南大学或其它教育机构的学位或证书而使用\\
+              过的材料。与我一同工作的同志对本研究所做的任何贡献均已在论文中作了明确的说明并\\
+              表示了谢意。
+            }
+        };
 
-    \vspace{0.76cm}
-    \begin{center}
-      论文作者签名：\seu_blank_rule:n { 8em }
-      \qquad
-      日期：\seu_display_or_date_placeholder:N \g_seu_originality_date_tl
-    \end{center}
+      \node[anchor=north,inner\c_space_tl sep=0pt]
+        at ($(current\c_space_tl page.north)+(0.20cm,-10.87cm)$)
+        {
+          \parbox[t]{13.40cm}
+            {
+              \songti\fontsize{12pt}{13.4pt}\selectfont
+              论文作者签名：\seu_statement_signature_rule:
+              \hspace{1.0cm}
+              日期：\seu_display_or_statement_date:N \g_seu_originality_date_tl
+            }
+        };
 
-    \vspace{2.72cm}
-    \begin{center}
-      {\heiti\fontsize{18pt}{15pt}\selectfont 东南大学毕业（设计）论文使用授权声明 \par}
-    \end{center}
+      \node[anchor=north,inner\c_space_tl sep=0pt]
+        at ($(current\c_space_tl page.north)+(0cm,-16.72cm)$)
+        {{\heiti\fontsize{18pt}{15pt}\selectfont 东南大学毕业（设计）论文使用授权声明}};
 
-    \vspace{0.82cm}
-    \begin{center}
-      \begin{minipage}{15.55cm}
-      东南大学有权保留本人所送交毕业（设计）论文的复印件和电子文档，可以采用影印、缩印或其他复制手段保存论文。
-      本人电子文档的内容和纸质论文的内容相一致。除在保密期内的保密论文外，允许论文被查阅和借阅，
-      可以公布（包括刊登）论文的全部或部分内容。论文的公布（包括刊登）授权东南大学教务处办理。
-      \end{minipage}
-    \end{center}
+      \node[anchor=north,inner\c_space_tl sep=0pt]
+        at ($(current\c_space_tl page.north)+(0.19cm,-18.50cm)$)
+        {
+          \parbox[t]{16.70cm}
+            {
+              \songti\fontsize{12pt}{13.4pt}\selectfont
+              \noindent\hspace*{2em}东南大学有权保留本人所送交毕业（设计）论文的复印件和电子文档，可以采用影印、\\
+              缩印或其他复制手段保存论文。本人电子文档的内容和纸质论文的内容相一致。除在保密\\
+              期内的保密论文外，允许论文被查阅和借阅，可以公布（包括刊登）论文的全部或部分内\\
+              容。论文的公布（包括刊登）授权东南大学教务处办理。
+            }
+        };
 
-    \vspace{0.78cm}
-    \noindent
-    \hspace*{0.55cm}
-    \begin{minipage}[t]{0.40\textwidth}
-      论文作者签名：\seu_blank_rule:n { 8em }\par
-      日期：\seu_display_or_date_placeholder:N \g_seu_authorization_author_date_tl
-    \end{minipage}
-    \hfill
-    \begin{minipage}[t]{0.40\textwidth}
-      导师签名：\seu_blank_rule:n { 8em }\par
-      日期：\seu_display_or_date_placeholder:N \g_seu_authorization_supervisor_date_tl
-    \end{minipage}
+      \node[anchor=north,inner\c_space_tl sep=0pt]
+        at ($(current\c_space_tl page.north)+(-3.60cm,-21.80cm)$)
+        {
+          \parbox[t]{6.65cm}
+            {
+              \songti\fontsize{12pt}{13.4pt}\selectfont
+              论文作者签名：\seu_statement_signature_rule:\par
+              日期：\seu_display_or_statement_date:N \g_seu_authorization_author_date_tl
+            }
+        };
+
+      \node[anchor=north,inner\c_space_tl sep=0pt]
+        at ($(current\c_space_tl page.north)+(3.72cm,-21.80cm)$)
+        {
+          \parbox[t]{6.40cm}
+            {
+              \songti\fontsize{12pt}{13.4pt}\selectfont
+              导师签名：\seu_statement_signature_rule:\par
+              日期：\seu_display_or_statement_date:N \g_seu_authorization_supervisor_date_tl
+            }
+        };
+    \end{tikzpicture}
+    \null
     \endgroup
   }
 
@@ -548,96 +776,69 @@
   {
     \seublankmatter
     \seu_ai_scope_detect:
-    \begin{center}
-      {\seuaititlefont 东南大学本科毕业论文（设计）AI工具使用情况说明表 \par}
-    \end{center}
-
-    \vspace{0.16cm}
     \begingroup
-    \seuaibodyfont
     \setlength{\arrayrulewidth}{0.5pt}
     \setlength{\tabcolsep}{0pt}
     \renewcommand{\arraystretch}{1}
-    \noindent
-    \makebox[\textwidth][c]{%
-      \begin{tabular}{|p{3.02cm}|p{3.93cm}|p{3.48cm}|p{1.51cm}|p{3.25cm}|}
-        \hline
-        \parbox[c][0.88cm][c]{3.02cm}{\centering\seuaiheaderfont 课题名称}
-          & \multicolumn{4}{>{\centering\arraybackslash}p{12.17cm}|}
-              {\parbox[c][0.88cm][c]{12.17cm}{\centering\seuaibodyfont \seutitle}}
-          \tabularnewline
-        \hline
-        \parbox[c][0.88cm][c]{3.02cm}{\centering\seuaiheaderfont 学\hspace{1.6em}号}
-          & \parbox[c][0.88cm][c]{3.93cm}{\centering\seuaiboldvaluefont \seustudentid}
-          & \parbox[c][0.88cm][c]{3.48cm}{\centering\seuaiheaderfont 姓\hspace{1.6em}名}
-          & \multicolumn{2}{>{\centering\arraybackslash}p{4.76cm}|}
-              {\parbox[c][0.88cm][c]{4.76cm}{\centering\seuaiboldvaluefont \seuauthor}}
-          \tabularnewline
-        \hline
-        \parbox[c][0.88cm][c]{3.02cm}{\centering\seuaiheaderfont 是否使用生成式人工智能}
-          & \multicolumn{4}{>{\centering\arraybackslash}p{12.17cm}|}
-              {\parbox[c][0.88cm][c]{12.17cm}{\centering\seuaibodyfont \seu_yes_box:~是 \hspace{2.8cm} \seu_no_box:~否}}
-          \tabularnewline
-        \hline
-        \parbox[c][0.88cm][c]{3.02cm}{\centering\seuaiheaderfont 工具、版本号}
-          & \parbox[c][0.88cm][c]{3.93cm}{\centering\seuaiheaderfont 使用范围}
-          & \multicolumn{2}{>{\centering\arraybackslash}p{4.99cm}|}
-              {\parbox[c][0.88cm][c]{4.99cm}{\centering\seuaiheaderfont 使用过程}}
-          & \parbox[c][0.88cm][c]{3.25cm}{\centering\seuaiheaderfont 章节（页码）}
-          \tabularnewline
-        \hline
-        \parbox[t][3.53cm][t]{3.02cm}{\vspace{0pt}\raggedright\seuaibodyfont
-          \colorbox{yellow!60}{选择是：}\par
-          示例：\par
-          \tl_if_empty:NTF \g_seu_ai_tool_display_tl { DeepSeek-V3 } { \g_seu_ai_tool_display_tl }}
-          & \parbox[t][3.53cm][t]{3.93cm}{\vspace{0pt}\raggedright\seuaibodyfont
-              \seu_ai_scope_box:N \l_seu_ai_scope_text_bool ~文本生成及内容修改\par
-              \seu_ai_scope_box:N \l_seu_ai_scope_data_bool ~数据、图表分析、代码调试\par
-              \seu_ai_scope_box:N \l_seu_ai_scope_other_bool ~其他：请具体说明
-              \bool_if:NT \l_seu_ai_scope_other_bool
-                {
-                  \tl_if_blank:VF \g_seu_ai_scope_display_tl
-                    { \par \g_seu_ai_scope_display_tl }
-                }}
-          & \multicolumn{2}{p{4.99cm}|}
-              {\parbox[t][3.53cm][t]{4.99cm}{\vspace{0pt}\raggedright\seuaibodyfont
-                示例：\par
-                \tl_if_empty:NTF \g_seu_ai_process_display_tl
-                  { 输入哪些关键词或主题，指导AI工具生成或修改了哪些内容 }
-                  { \g_seu_ai_process_display_tl }}}
-          & \parbox[t][3.53cm][t]{3.25cm}{\vspace{0pt}\raggedright\seuaibodyfont
-              填写示例：\par
-              \tl_if_empty:NTF \g_seu_ai_pages_display_tl
-                { 第二章1.1（P5） }
-                { \g_seu_ai_pages_display_tl }}
-          \tabularnewline
-        \hline
-        \multicolumn{5}{|p{15.19cm}|}
-          {\parbox[t][2.00cm][t]{15.19cm}{\vspace{0pt}\raggedright\seuaibodyfont
-            \colorbox{yellow!60}{选择否：}\par
-            填写示例：在本人毕业论文（设计）的撰写过程中，未使用任何生成式人工智能辅助工具。\par
-            所有内容均由本人独立撰写和创作完成，能够确保学术诚信，不存在任何AI生成的内容。}}
-          \tabularnewline
-        \hline
-        \parbox[c][3.15cm][c]{3.02cm}{\centering\seuaiheaderfont 学生诚信申明}
-          & \multicolumn{4}{p{12.17cm}|}
-              {\parbox[t][3.15cm][t]{12.17cm}{\vspace{0pt}\seuaibodylongfont\setlength{\parindent}{0.74cm}
-                本人郑重声明，上述关于生成式人工智能使用情况的陈述真实无误，已对使用此类技术的所有细节进行了全面且诚实的报告。本人深知学术诚信的重要性，如有任何隐瞒或虚假之处，愿承担学术不端行为带来的相关惩处。\par
-                \noindent\makebox[\linewidth][r]{学生签名：\seu_blank_rule:n { 5em }}\par
-                \noindent\makebox[\linewidth][r]{\seu_display_or_date_placeholder:N \g_seu_ai_student_date_tl}}}
-          \tabularnewline
-        \hline
-        \parbox[c][2.00cm][c]{3.02cm}{\centering\seuaiheaderfont 指导教师意见}
-          & \multicolumn{4}{p{12.17cm}|}
-              {\parbox[t][2.00cm][t]{12.17cm}{\vspace{0pt}\seuaibodylongfont
-                意见：\tl_if_blank:VF \g_seu_ai_teacher_comment_tl { \g_seu_ai_teacher_comment_tl }\par
-                \mbox{}\par
-                \noindent\makebox[\linewidth][r]{指导教师签名：\seu_blank_rule:n { 5em }}\par
-                \noindent\makebox[\linewidth][r]{\seu_display_or_date_placeholder:N \g_seu_ai_teacher_date_tl}}}
-          \tabularnewline
-        \hline
-      \end{tabular}
-    }
+    \begin{tikzpicture}[remember\c_space_tl picture,overlay]
+      \node[anchor=north,inner\c_space_tl sep=0pt]
+        at ($(current\c_space_tl page.north)+(0cm,-3.66cm)$)
+        {{\seuaititlefont 东南大学本科毕业论文（设计）AI工具使用情况说明表}};
+
+      \node[anchor=north,inner\c_space_tl sep=0pt]
+        at ($(current\c_space_tl page.north)+(0.27cm,-4.47cm)$)
+        {
+          \begin{tabular}{|p{3.023cm}|p{3.929cm}|p{3.476cm}|p{1.513cm}|p{3.249cm}|}
+            \hline
+            \parbox[c][0.878cm][c]{3.023cm}{\centering\seuaiheaderfont 课题名称}
+              & \multicolumn{4}{>{\centering\arraybackslash}p{12.167cm}|}
+                  {\parbox[c][0.878cm][c]{12.167cm}{\centering\seuaibodyfont \seu_ai_subject_display:}}
+              \tabularnewline
+            \hline
+            \parbox[c][0.878cm][c]{3.023cm}{\centering\seuaiheaderfont 学\hspace{1.6em}号}
+              & \parbox[c][0.878cm][c]{3.929cm}{\centering\seuaiboldvaluefont \seustudentid}
+              & \parbox[c][0.878cm][c]{3.476cm}{\centering\seuaiheaderfont 姓\hspace{1.6em}名}
+              & \multicolumn{2}{>{\centering\arraybackslash}p{4.762cm}|}
+                  {\parbox[c][0.878cm][c]{4.762cm}{\centering\seuaiboldvaluefont \seuauthor}}
+              \tabularnewline
+            \hline
+            \parbox[c][0.878cm][c]{3.023cm}{\centering\seuaiheaderfont 是否使用生成\linebreak 式人工智能}
+              & \multicolumn{4}{>{\centering\arraybackslash}p{12.167cm}|}
+                  {\parbox[c][0.878cm][c]{12.167cm}{\centering\seuaibodyfont \seu_yes_box: 是 \hspace{3.0cm} \seu_no_box: 否}}
+              \tabularnewline
+            \hline
+            \parbox[c][0.878cm][c]{3.023cm}{\centering\seuaiheaderfont 工具、版本号}
+              & \parbox[c][0.878cm][c]{3.929cm}{\centering\seuaiheaderfont 使用范围}
+              & \multicolumn{2}{>{\centering\arraybackslash}p{4.989cm}|}
+                  {\parbox[c][0.878cm][c]{4.989cm}{\centering\seuaiheaderfont 使用过程}}
+              & \parbox[c][0.878cm][c]{3.249cm}{\centering\seuaiheaderfont 章节（页码）}
+              \tabularnewline
+            \hline
+            \parbox[t][3.534cm][t]{3.023cm}{\vspace{0pt}\raggedright\seuaibodyfont \seu_ai_yes_tool_block:}
+              & \parbox[t][3.534cm][t]{3.929cm}{\vspace{0pt}\raggedright\seuaibodyfont \seu_ai_yes_scope_block:}
+              & \multicolumn{2}{p{4.989cm}|}
+                  {\parbox[t][3.534cm][t]{4.989cm}{\vspace{0pt}\raggedright\seuaibodyfont \seu_ai_yes_process_block:}}
+              & \parbox[t][3.534cm][t]{3.249cm}{\vspace{0pt}\raggedright\seuaibodyfont \seu_ai_yes_pages_block:}
+              \tabularnewline
+            \hline
+            \multicolumn{5}{|p{15.190cm}|}
+              {\parbox[t][2.20cm][t]{15.190cm}{\vspace{0pt}\raggedright\seuaibodyfont \seu_ai_no_block:}}
+              \tabularnewline
+            \hline
+            \parbox[c][3.50cm][c]{3.023cm}{\centering\raisebox{-0.36cm}{\seuaiheaderfont 学生诚信申明}}
+              & \multicolumn{4}{p{12.167cm}|}
+                  {\parbox[t][3.50cm][t]{12.167cm}{\vspace*{0.02cm}\seuaibodylongfont \seu_ai_student_statement_block:}}
+              \tabularnewline
+            \hline
+            \parbox[c][2.65cm][c]{3.023cm}{\centering\raisebox{-0.36cm}{\seuaiheaderfont 指导教师意见}}
+              & \multicolumn{4}{p{12.167cm}|}
+                  {\parbox[t][2.65cm][t]{12.167cm}{\vspace*{0.02cm}\seuaibodylongfont \seu_ai_teacher_statement_block:}}
+              \tabularnewline
+            \hline
+          \end{tabular}
+        };
+    \end{tikzpicture}
+    \null
     \endgroup
   }
 
@@ -740,6 +941,7 @@
 \NewDocumentCommand{\seuabstracten}{}  { \tl_use:N \g_seu_abstract_en_tl }
 \NewDocumentCommand{\seukeywordsen}{}  { \tl_use:N \g_seu_keywords_en_tl }
 \NewDocumentCommand{\seucoverdate}{}   { \tl_use:N \g_seu_cover_date_tl }
+\NewDocumentCommand{\seuaisubject}{}   { \tl_use:N \g_seu_ai_subject_tl }
 \NewDocumentCommand{\seumottoimage}{}  { \tl_use:N \g_seu_motto_image_tl }
 \NewDocumentCommand{\seuimagepath}{}   { \tl_use:N \g_seu_image_path_tl }
 \NewDocumentCommand{\seulogoimage}{}   { \tl_use:N \g_seu_logo_image_tl }
@@ -787,13 +989,15 @@
 
 \newcommand{\seucovertitlefont}{\heiti\fontsize{22pt}{46pt}\selectfont}
 \newcommand{\seucoversubtitlefont}{\fontsize{16pt}{46pt}\selectfont}
-\newcommand{\seucoverlabelfont}{\heiti\fontsize{14pt}{14pt}\selectfont}
+\newcommand{\seucovernotefont}{\songti\fontsize{16pt}{46pt}\selectfont}
+\newcommand{\seucoverlabelfont}{\CJKfamily{seucovershmedium}\fontsize{14pt}{14pt}\selectfont}
 \newcommand{\seucovervaluefont}{\songti\fontsize{18pt}{18pt}\selectfont}
-\newcommand{\seuaititlefont}{\heiti\bfseries\fontsize{16pt}{18pt}\selectfont}
-\newcommand{\seuaiheaderfont}{\heiti\fontsize{10.5pt}{12pt}\selectfont}
+\newcommand{\seucoverdatefont}{\kaishu\fontsize{12pt}{15pt}\selectfont}
+\newcommand{\seuaititlefont}{\CJKfamily{seucovershmedium}\fontsize{16pt}{18pt}\selectfont}
+\newcommand{\seuaiheaderfont}{\CJKfamily{seucovershmedium}\fontsize{12pt}{12pt}\selectfont}
 \newcommand{\seuaibodyfont}{\songti\fontsize{10.5pt}{12pt}\selectfont}
 \newcommand{\seuaibodylongfont}{\songti\fontsize{10.5pt}{13.9pt}\selectfont}
-\newcommand{\seuaiboldvaluefont}{\songti\bfseries\fontsize{10.5pt}{12pt}\selectfont}
+\newcommand{\seuaiboldvaluefont}{\CJKfamily{seucovershmedium}\fontsize{12pt}{12pt}\selectfont}
 
 \fancypagestyle{seublank}{
   \fancyhf{}
