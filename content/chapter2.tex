@@ -27,17 +27,19 @@
   \centering
   \begin{subfigure}[b]{0.38\textwidth}
     \centering
-    \includegraphics[width=0.88\linewidth]{imgs/demo2(a).png}
+    \includegraphics[width=0.74\linewidth]{imgs/demo2(a).png}
     \caption*{(a) 速度障碍集合}
   \end{subfigure}
   \hfill
   \begin{subfigure}[b]{0.38\textwidth}
     \centering
-    \includegraphics[width=0.88\linewidth]{imgs/demo2(b).png}
+    \includegraphics[width=0.74\linewidth]{imgs/demo2(b).png}
     \caption*{(b) 避免碰撞集合}
   \end{subfigure}
   \caption{速度障碍法速度选择}
 \end{figure}
+
+\vspace{-1.20\baselineskip}
 
 \section{表格格式要求}
 
@@ -49,9 +51,9 @@
 表格居中，边框为黑色直线 1 磅，中文为五号宋体，英文及数字为五号 Times New Roman 字体，表序与表名之间空一格，
 表格与下文之间空一行。
 
-\begin{table}[htbp]
-  \centering
-  \caption{降水率分级统计}
+\vspace{0.90\baselineskip}
+\begin{center}
+  \captionof{table}{降水率分级统计}
   \begin{tabular}{cccc}
     \toprule
     降水率(mm/h)分级 & 该等级所占比例(\%) & \multicolumn{2}{c}{降水等级描述} \\
@@ -64,14 +66,22 @@
     $30.0 \le x < 100.0$ & 0.16 & \multicolumn{2}{c}{暴雨} \\
     \bottomrule
   \end{tabular}
-\end{table}
+\end{center}
 
-\begin{table}[htbp]
-  \centering
-  \caption{室外细菌气溶胶香农-维纳指数（H）和均匀性指数（E）}
+\vspace{0.5\baselineskip}
+\begin{center}
+  \captionof{table}{室外细菌气溶胶香农-维纳指数（H）和均匀性指数（E）}
   \begin{tabular}{lcccccccccccc}
     \toprule
     & \multicolumn{4}{c}{Stage 1 (>7.1 $\mu$m)} & \multicolumn{4}{c}{Stage 2 (4.8-7.1 $\mu$m)} & \multicolumn{4}{c}{Stage 3 (3.2-4.7 $\mu$m)} \\
+    \cmidrule(lr){2-5}\cmidrule(lr){6-9}\cmidrule(lr){10-13}
+  \end{tabular}
+\end{center}
+
+\clearpage
+
+\begin{center}
+  \begin{tabular}{lcccccccccccc}
     \cmidrule(lr){2-5}\cmidrule(lr){6-9}\cmidrule(lr){10-13}
     & Con & Low & Medium & High & Con & Low & Medium & High & Con & Low & Medium & High \\
     \midrule
@@ -79,11 +89,11 @@
     E & 0.87 & 0.88 & 0.93 & 0.85 & 0.90 & 0.86 & 0.86 & 0.85 & 0.90 & 0.90 & 0.85 & 0.88 \\
     \bottomrule
   \end{tabular}
-\end{table}
+\end{center}
 
-\begin{table}[htbp]
-  \centering
-  \caption{统计表}
+\vspace{0.5\baselineskip}
+\begin{center}
+  \captionof{table}{统计表}
   \begin{tabular}{ccccc}
     \toprule
     产品 & 产量 & 销量 & 产值 & 比重 \\
@@ -94,11 +104,11 @@
     合计 & 17600 & 16000 & 1000 & 100\% \\
     \bottomrule
   \end{tabular}
-\end{table}
+\end{center}
 
-\begin{table}[htbp]
-  \centering
-  \caption{分栏表}
+\vspace{0.5\baselineskip}
+\begin{center}
+  \captionof{table}{分栏表}
   \begin{tabular}{ccccc}
     \toprule
     年度 & 产品 & 产量 & 销量 & 产值 \\
@@ -109,7 +119,7 @@
       & 计算机 & 2100 & 1500 & 320 \\
     \bottomrule
   \end{tabular}
-\end{table}
+\end{center}
 
 \section{表达式}
 
@@ -121,11 +131,13 @@
 矢量用粗斜体如 $\bm{S}$ 或白斜体上加单箭头，常用函数（如三角函数 $\cos$、对数函数 $\ln$ 等）、
 数字运算符、化学元素符号及分子式、单位符号、产品代号、人名地名的外文字母等用正体。
 
+\clearpage
+\vspace*{-2mm}
+
 公式排版时可选中模板中的“公式式样”，先将光标移至公式前，按“Tab”键，公式居中；
 再将光标移至编号前，按“Tab”键移动一个制表符位置，使公式编号右对齐。
 
-\clearpage
-
+\vspace{16pt}
 \begin{equation}
   V_{\text{cell}} = E_{\text{OCV}} - V_{\text{act}} - V_{\text{ohm}} - V_{\text{conc}}
 \end{equation}
@@ -140,6 +152,8 @@
     \right]
   \end{aligned}
 \end{equation}
+
+\vspace{-6pt}
 
 \section{注释}
 

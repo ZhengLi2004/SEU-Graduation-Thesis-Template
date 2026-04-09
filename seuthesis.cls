@@ -29,6 +29,8 @@
 \RequirePackage{tikzpagenodes}
 \RequirePackage{tabularray}
 \RequirePackage{array}
+\RequirePackage{ragged2e}
+\RequirePackage{microtype}
 \RequirePackage{amsmath}
 \RequirePackage{amssymb}
 \RequirePackage{bm}
@@ -192,31 +194,36 @@
 
 \cs_new_protected:Npn \seu_set_cover_label_font:
   {
-    \file_if_exist:nTF { fonts/SourceHanSansSC-Medium.otf }
+    \IfFontExistsTF { SimHei }
+      { \setCJKfamilyfont { seucovershmedium } { SimHei } }
       {
-        \setCJKfamilyfont { seucovershmedium }
-          [
-            Path = {./fonts/},
-            Extension = .otf,
-            UprightFont = *
-          ]
-          { SourceHanSansSC-Medium }
+        \IfFontExistsTF { 黑体 }
+          { \setCJKfamilyfont { seucovershmedium } { 黑体 } }
+          {
+            \seu_font_missing_error:nn
+              { SimHei~or~黑体 }
+              {system-font-name~lookup~only}
+          }
+      }
+  }
+
+\cs_new_protected:Npn \seu_set_heading_font:
+  {
+    \IfFontExistsTF { SimHei }
+      {
+        \setCJKfamilyfont { seuheadingmedium } { SimHei }
+        \setCJKfamilyfont { seuheadingbold } [ AutoFakeBold = { 4.5 } ] { SimHei }
       }
       {
-        \file_if_exist:nTF { fonts/SourceHanSansCN-Medium.otf }
+        \IfFontExistsTF { 黑体 }
           {
-            \setCJKfamilyfont { seucovershmedium }
-              [
-                Path = {./fonts/},
-                Extension = .otf,
-                UprightFont = *
-              ]
-              { SourceHanSansCN-Medium }
+            \setCJKfamilyfont { seuheadingmedium } { 黑体 }
+            \setCJKfamilyfont { seuheadingbold } [ AutoFakeBold = { 4.5 } ] { 黑体 }
           }
           {
             \seu_font_missing_error:nn
-              { SourceHanSansSC-Medium.otf~or~SourceHanSansCN-Medium.otf }
-              {relative~directory~'fonts/' only}
+              { SimHei~or~黑体 }
+              {system-font-name~lookup~only}
           }
       }
   }
@@ -231,6 +238,7 @@
     % Exact fonts required by the Word template.
 
     \seu_set_cover_label_font:
+    \seu_set_heading_font:
 
     \seu_require_system_main_font:n { Times~New~Roman }
 
@@ -278,7 +286,7 @@
     \normalfont
     \rmfamily
     \songti
-    \seuxiaosi
+    \seuxiaosi\selectfont
     \setstretch { 1.5 }
     \setlength { \parindent } { 2\ccwd }
     \setlength { \parskip } { 0pt }
@@ -317,8 +325,72 @@
 \cs_new:Npn \seu_display_or_ai_date:N #1
   { \tl_if_blank:VTF #1 { \seu_ai_date_placeholder: } { \tl_use:N #1 } }
 
+\cs_new:Npn \seu_ai_date_line:N #1
+  {
+    \tl_if_blank:VTF #1
+      { 日期：\hspace{1.8em}年\hspace{1.8em}月\hspace{1.8em}日 }
+      { 日期：\tl_use:N #1 }
+  }
+
 \cs_new:Npn \seu_ai_signature_space:
   { \makebox[2.85cm][c]{} }
+
+\cs_new:Npn \seu_cover_date_display:
+  { \tl_if_blank:VTF \g_seu_cover_date_tl { \seu_date_placeholder: } { \tl_use:N \g_seu_cover_date_tl } }
+
+\cs_new_protected:Npn \seu_cover_draw_horizontal_rule:nnn #1#2#3
+  {
+    \draw[line\c_space_tl width=0.15pt]
+      ($(current\c_space_tl page.north\c_space_tl west)+(#1,-#2)$) --
+      ++(#3,0);
+  }
+
+\cs_new_protected:Npn \seu_cover_draw_center_text:nnn #1#2#3
+  {
+    \node[anchor=center,inner\c_space_tl sep=0pt,outer\c_space_tl sep=0pt]
+      at ($(current\c_space_tl page.north\c_space_tl west)+(#1,-#2)$)
+      {#3};
+  }
+
+\cs_new_protected:Npn \seu_cover_draw_label:nn #1#2
+  {
+    \node[
+      anchor=west,
+      inner\c_space_tl sep=0pt,
+      outer\c_space_tl sep=0pt,
+      text\c_space_tl width=3.436cm,
+      align=left
+    ]
+      at ($(current\c_space_tl page.north\c_space_tl west)+(5.21cm,-#1)$)
+      {{\seucoverlabelfont #2}};
+  }
+
+\cs_new_protected:Npn \seu_cover_draw_value:nn #1#2
+  {
+    \node[
+      anchor=center,
+      inner\c_space_tl sep=0pt,
+      outer\c_space_tl sep=0pt,
+      text\c_space_tl width=7.976cm,
+      align=center
+    ]
+      at ($(current\c_space_tl page.north\c_space_tl west)+(12.45cm,-#1)$)
+      {{\seucovervaluefont #2}};
+  }
+
+\cs_new_protected:Npn \seu_cover_draw_field_row:nnn #1#2#3
+  {
+    \seu_cover_draw_label:nn {#1} {#2}
+    \seu_cover_draw_value:nn {#1} {#3}
+    \seu_cover_draw_horizontal_rule:nnn { 8.46cm } { \fp_eval:n {#1 + 0.44} cm } { 7.976cm }
+  }
+
+\cs_new_protected:Npn \seu_statement_draw_text:nnn #1#2#3
+  {
+    \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt,outer\c_space_tl sep=0pt]
+      at ($(current\c_space_tl page.north\c_space_tl west)+(#1,-#2)$)
+      {#3};
+  }
 
 \cs_new:Npn \seu_cover_rule_box:nn #1#2
   {
@@ -402,7 +474,64 @@
         inner\c_space_tl ysep=0pt,
         outer\c_space_tl sep=0pt,
         anchor=base
-      ] (seulabel) { {\CJKfamily{seucovershmedium}\fontsize{10.5pt}{12pt}\selectfont \strut #1} };
+      ] (seulabel) { {\songti\fontsize{10.5pt}{12pt}\selectfont \strut #1} };
+  }
+
+\cs_new:Npn \seu_ai_justified_box:nn #1#2
+  {
+    \parbox[t]{#1}
+      {
+        \microtypesetup{protrusion=true}
+        \setlength{\parindent}{0pt}
+        \setlength{\parskip}{0pt}
+        \justifying
+        #2
+      }
+  }
+
+\cs_new:Npn \seu_ai_plain_box:nn #1#2
+  {
+    \parbox[t]{#1}
+      {
+        \setlength{\parindent}{0pt}
+        \setlength{\parskip}{0pt}
+        \RaggedRight
+        #2
+      }
+  }
+
+\cs_new:Npn \seu_ai_indented_justified_box:nn #1#2
+  {
+    \parbox[t]{#1}
+      {
+        \microtypesetup{protrusion=true}
+        \setlength{\parindent}{2em}
+        \setlength{\parskip}{0pt}
+        \justifying
+        #2
+      }
+  }
+
+\cs_new:Npn \seu_ai_signature_line:Nn #1#2
+  {
+    \makebox[0pt][l]
+      {
+        #2：\hspace{1.8em}\makebox[4.4em][l]{}
+        \hspace{1.8em}\seu_display_or_ai_date:N #1
+      }
+  }
+
+\cs_new:Npn \seu_ai_signature_date_block:Nn #1#2
+  {
+    \parbox[t]{11.4em}
+      {
+        \seuaibodyfont
+        \setlength{\parindent}{0pt}
+        \setlength{\parskip}{0pt}
+        #2 \par
+        \vspace{4pt}
+        日期：\seu_display_or_ai_date:N #1
+      }
   }
 
 \cs_new:Npn \seu_ai_subject_display:
@@ -450,8 +579,8 @@
     \str_if_eq:eeTF { \tl_use:N \g_seu_ai_used_tl } { no }
       { }
       {
-        \seu_ai_scope_box:N \l_seu_ai_scope_text_bool ~文本生成及内容修\\改\par
-        \seu_ai_scope_box:N \l_seu_ai_scope_data_bool ~数据、图表分析、代\\码调试\par
+        \seu_ai_scope_box:N \l_seu_ai_scope_text_bool ~文本生成及内容修改\par
+        \seu_ai_scope_box:N \l_seu_ai_scope_data_bool ~数据、图表分析、代码调试\par
         \seu_ai_scope_box:N \l_seu_ai_scope_other_bool ~其他：请具体说明
         \bool_if:NT \l_seu_ai_scope_other_bool
           {
@@ -464,7 +593,7 @@
 \cs_new:Npn \seu_ai_yes_process_block:
   {
     \str_if_eq:eeTF { \tl_use:N \g_seu_ai_used_tl } { unset }
-      { 示例：\par 输入哪些关键词或主题，指\\导AI工具生成或修改了哪些\\内容 }
+      { 示例：\\ 输入哪些关键词或主题，指\\ 导AI工具生成或修改了哪些\\ 内容 }
       {
         \str_if_eq:eeTF { \tl_use:N \g_seu_ai_used_tl } { yes }
           { \seu_ai_process_display_or_blank: }
@@ -496,15 +625,15 @@
 
 \cs_new:Npn \seu_ai_student_statement_block:
   {
-    \noindent\hspace*{0.74cm}本人郑重声明，上述关于生成式人工智能使用情况的陈述真实无误，\par
-    已对使用此类技术的所有细节进行了全面且诚实的报告。本人深知学术诚\par
-    信的重要性，如有任何隐瞒或虚假之处，愿承担学术不端行为带来的相关\par
+    本人郑重声明，上述关于生成式人工智能使用情况的陈述真实无误，\\
+    已对使用此类技术的所有细节进行了全面且诚实的报告。本人深知学术诚\\
+    信的重要性，如有任何隐瞒或虚假之处，愿承担学术不端行为带来的相关\\
     惩处。
   }
 
 \cs_new:Npn \seu_ai_teacher_statement_block:
   {
-    \noindent 意见：\tl_if_blank:VF \g_seu_ai_teacher_comment_tl { \g_seu_ai_teacher_comment_tl }
+    意见：\tl_if_blank:VF \g_seu_ai_teacher_comment_tl { \g_seu_ai_teacher_comment_tl }
   }
 
 \cs_new:Npn \seu_tool_version:nn #1#2
@@ -564,15 +693,15 @@
 \cs_new:Npn \seu_ai_item_row:nnnnn #1#2#3#4#5
   {
     \noindent
-    \textbf{工具：}
+    {\seuaiheaderfont 工具：}
     \tl_if_blank:nTF {#1} { 未填写 } { #1 }
     \quad
-    \textbf{版本：}
+    {\seuaiheaderfont 版本：}
     \tl_if_blank:nTF {#2} { 未填写 } { #2 }
     \par
-    \textbf{使用范围：} #3 \par
-    \textbf{使用过程：} #4 \par
-    \textbf{章节（页码）：} #5
+    {\seuaiheaderfont 使用范围：} #3 \par
+    {\seuaiheaderfont 使用过程：} #4 \par
+    {\seuaiheaderfont 章节（页码）：} #5
     \par\medskip
   }
 
@@ -633,10 +762,32 @@
 
 \cs_new_protected:Npn \seu_preface_title:n #1
   {
-    \begin{center}
-      {\seusanhao\bfseries #1 \par}
-    \end{center}
-    \vspace{1.0cm}
+    \par
+    {
+      \centering
+      {\seuboldheiti\seusanhao #1 \par}
+    }
+    \vspace{0.24cm}
+  }
+
+\cs_new_protected:Npn \seu_compact_preface_title:n #1
+  {
+    \vspace*{-8pt}
+    {
+      \centering
+      {\seuboldheiti\seusanhao #1 \par}
+    }
+    \vspace{0.12cm}
+  }
+
+\cs_new_protected:Npn \seu_compact_english_preface_title:n #1
+  {
+    \vspace*{-12pt}
+    {
+      \centering
+      {\rmfamily\fontseries{b}\selectfont\seusanhao #1 \par}
+    }
+    \vspace{0.12cm}
   }
 
 \cs_new_protected:Npn \seu_make_cover:
@@ -645,32 +796,40 @@
     \seu_insert_fullpage_background:n { \seucoverbgimage }
     \begin{tikzpicture}[remember\c_space_tl picture,overlay]
       \node[anchor=north,inner\c_space_tl sep=0pt]
-        at ($(current\c_space_tl page.north)+(0cm,-3.94cm)$)
+        at ($(current\c_space_tl page.north)+(0.23cm,-4.06cm)$)
         {\includegraphics[width=8.56cm]{\seulogoimage}};
 
       \node[anchor=north,inner\c_space_tl sep=0pt]
-        at ($(current\c_space_tl page.north)+(0cm,-6.84cm)$)
+        at ($(current\c_space_tl page.north)+(0.23cm,-6.74cm)$)
         {\includegraphics[width=16.48cm]{\seudegreeimage}};
 
-      \node[anchor=north,inner\c_space_tl sep=0pt]
-        at ($(current\c_space_tl page.north)+(0cm,-10.48cm)$)
-        {\seu_cover_rule_box:nn { 12.843cm } { {\seucovertitlefont \seutitle} }};
+      \seu_cover_draw_center_text:nnn
+        { 10.73cm }
+        { 11.79cm }
+        { {\seucovertitlefont \seutitle} }
+      \seu_cover_draw_horizontal_rule:nnn { 4.31cm } { 12.38cm } { 12.843cm }
 
       \tl_if_blank:VTF \g_seu_subtitle_tl
         { }
         {
-          \node[anchor=north,inner\c_space_tl sep=0pt]
-            at ($(current\c_space_tl page.north)+(0cm,-12.69cm)$)
-            {\seu_cover_note_box:nn { 12.843cm } { {\seucovernotefont \seusubtitle} }};
+          \seu_cover_draw_center_text:nnn
+            { 10.73cm }
+            { 13.50cm }
+            { {\seucovernotefont \seusubtitle} }
+          \seu_cover_draw_horizontal_rule:nnn { 4.28cm } { 14.03cm } { 12.843cm }
         }
 
-      \node[anchor=north,inner\c_space_tl sep=0pt]
-        at ($(current\c_space_tl page.north)+(0.02cm,-15.05cm)$)
-        {\seu_make_cover_fields_table:};
+      \seu_cover_draw_field_row:nnn { 15.64 } { 学\hspace{1.8em}号： } { \seustudentid }
+      \seu_cover_draw_field_row:nnn { 16.78 } { 姓\hspace{1.8em}名： } { \seuauthor }
+      \seu_cover_draw_field_row:nnn { 17.92 } { 学\hspace{1.8em}院： } { \seuschool }
+      \seu_cover_draw_field_row:nnn { 19.06 } { 专\hspace{1.8em}业： } { \seumajor }
+      \seu_cover_draw_field_row:nnn { 20.20 } { 指导教师： } { \seusupervisor }
+      \seu_cover_draw_field_row:nnn { 21.34 } { 起止日期： } { \seudaterange }
 
-      \node[anchor=north,inner\c_space_tl sep=0pt]
-        at ($(current\c_space_tl page.north)+(0cm,-24.32cm)$)
-        {{\seucoverdatefont \seu_display_or_rule:nN { 10em } \g_seu_cover_date_tl}};
+      \seu_cover_draw_center_text:nnn
+        { 11.00cm }
+        { 24.05cm }
+        { {\seucoverdatefont \seu_cover_date_display:} };
     \end{tikzpicture}
     \null
   }
@@ -679,77 +838,92 @@
   {
     \seublankmatter
     \begingroup
-    \songti\fontsize{12pt}{13.4pt}\selectfont
-    \setlength{\parindent}{24pt}
     \begin{tikzpicture}[remember\c_space_tl picture,overlay]
       \node[anchor=north,inner\c_space_tl sep=0pt]
-        at ($(current\c_space_tl page.north)+(0cm,-4.72cm)$)
-        {{\heiti\fontsize{18pt}{15pt}\selectfont 东南大学毕业（设计）论文独创性声明}};
+        at ($(current\c_space_tl page.north)+(1.04cm,-4.73cm)$)
+        {{\CJKfamily{seuheadingmedium}\fontsize{18pt}{18pt}\selectfont 东南大学毕业（设计）论文独创性声明}};
 
-      \node[anchor=north,inner\c_space_tl sep=0pt]
-        at ($(current\c_space_tl page.north)+(0.19cm,-6.83cm)$)
+      \seu_statement_draw_text:nnn { 3.35cm } { 6.83cm }
+        {{\songti\fontsize{12pt}{12pt}\selectfont 本人声明所呈交的毕业（设计）论文是我个人在导师指导下进行的研究工作及取得的}};
+      \seu_statement_draw_text:nnn { 2.50cm } { 7.52cm }
+        {{\songti\fontsize{12pt}{12pt}\selectfont 研究成果。尽我所知，除了文中特别加以标注和致谢的地方外，论文中不包含其他人已经}};
+      \seu_statement_draw_text:nnn { 2.50cm } { 8.21cm }
+        {{\songti\fontsize{12pt}{12pt}\selectfont 发表或撰写过的研究成果，也不包含为获得东南大学或其它教育机构的学位或证书而使用}};
+      \seu_statement_draw_text:nnn { 2.50cm } { 8.90cm }
+        {{\songti\fontsize{12pt}{12pt}\selectfont 过的材料。与我一同工作的同志对本研究所做的任何贡献均已在论文中作了明确的说明并}};
+      \seu_statement_draw_text:nnn { 2.50cm } { 9.59cm }
+        {{\songti\fontsize{12pt}{12pt}\selectfont 表示了谢意。}};
+
+      \seu_statement_draw_text:nnn { 4.19cm } { 10.96cm }
+        {{\songti\fontsize{12pt}{12pt}\selectfont 论文作者签名：}};
+      \seu_cover_draw_horizontal_rule:nnn { 7.06cm } { 11.37cm } { 3.38cm }
+      \seu_statement_draw_text:nnn { 11.10cm } { 10.96cm }
+        {{\songti\fontsize{12pt}{12pt}\selectfont 日期：}};
+      \tl_if_blank:VTF \g_seu_originality_date_tl
         {
-          \parbox[t]{16.70cm}
-            {
-              \songti\fontsize{12pt}{13.4pt}\selectfont
-              \noindent\hspace*{2em}本人声明所呈交的毕业（设计）论文是我个人在导师指导下进行的研究工作及取得的\\
-              研究成果。尽我所知，除了文中特别加以标注和致谢的地方外，论文中不包含其他人已经\\
-              发表或撰写过的研究成果，也不包含为获得东南大学或其它教育机构的学位或证书而使用\\
-              过的材料。与我一同工作的同志对本研究所做的任何贡献均已在论文中作了明确的说明并\\
-              表示了谢意。
-            }
-        };
-
-      \node[anchor=north,inner\c_space_tl sep=0pt]
-        at ($(current\c_space_tl page.north)+(0.20cm,-10.87cm)$)
+          \seu_cover_draw_horizontal_rule:nnn { 12.45cm } { 11.37cm } { 1.47cm }
+          \seu_cover_draw_horizontal_rule:nnn { 14.35cm } { 11.37cm } { 1.05cm }
+          \seu_cover_draw_horizontal_rule:nnn { 15.83cm } { 11.37cm } { 1.05cm }
+          \seu_statement_draw_text:nnn { 14.02cm } { 10.96cm } {{\songti\fontsize{12pt}{12pt}\selectfont 年}}
+          \seu_statement_draw_text:nnn { 15.49cm } { 10.96cm } {{\songti\fontsize{12pt}{12pt}\selectfont 月}}
+          \seu_statement_draw_text:nnn { 16.96cm } { 10.96cm } {{\songti\fontsize{12pt}{12pt}\selectfont 日}}
+        }
         {
-          \parbox[t]{13.40cm}
-            {
-              \songti\fontsize{12pt}{13.4pt}\selectfont
-              论文作者签名：\seu_statement_signature_rule:
-              \hspace{1.0cm}
-              日期：\seu_display_or_statement_date:N \g_seu_originality_date_tl
-            }
-        };
+          \seu_statement_draw_text:nnn { 12.45cm } { 10.96cm }
+            {{\songti\fontsize{12pt}{12pt}\selectfont \tl_use:N \g_seu_originality_date_tl}};
+        }
 
       \node[anchor=north,inner\c_space_tl sep=0pt]
-        at ($(current\c_space_tl page.north)+(0cm,-16.72cm)$)
-        {{\heiti\fontsize{18pt}{15pt}\selectfont 东南大学毕业（设计）论文使用授权声明}};
+        at ($(current\c_space_tl page.north)+(1.04cm,-16.97cm)$)
+        {{\CJKfamily{seuheadingmedium}\fontsize{18pt}{18pt}\selectfont 东南大学毕业（设计）论文使用授权声明}};
 
-      \node[anchor=north,inner\c_space_tl sep=0pt]
-        at ($(current\c_space_tl page.north)+(0.19cm,-18.50cm)$)
+      \seu_statement_draw_text:nnn { 3.35cm } { 18.66cm }
+        {{\songti\fontsize{12pt}{12pt}\selectfont 东南大学有权保留本人所送交毕业（设计）论文的复印件和电子文档，可以采用影印、}};
+      \seu_statement_draw_text:nnn { 2.50cm } { 19.35cm }
+        {{\songti\fontsize{12pt}{12pt}\selectfont 缩印或其他复制手段保存论文。本人电子文档的内容和纸质论文的内容相一致。除在保密}};
+      \seu_statement_draw_text:nnn { 2.50cm } { 20.04cm }
+        {{\songti\fontsize{12pt}{12pt}\selectfont 期内的保密论文外，允许论文被查阅和借阅，可以公布（包括刊登）论文的全部或部分内}};
+      \seu_statement_draw_text:nnn { 2.50cm } { 20.73cm }
+        {{\songti\fontsize{12pt}{12pt}\selectfont 容。论文的公布（包括刊登）授权东南大学教务处办理。}};
+
+      \seu_statement_draw_text:nnn { 3.35cm } { 22.10cm }
+        {{\songti\fontsize{12pt}{12pt}\selectfont 论文作者签名：}};
+      \seu_cover_draw_horizontal_rule:nnn { 6.31cm } { 22.50cm } { 4.02cm }
+      \seu_statement_draw_text:nnn { 11.00cm } { 22.10cm }
+        {{\songti\fontsize{12pt}{12pt}\selectfont 导师签名：}};
+      \seu_cover_draw_horizontal_rule:nnn { 13.30cm } { 22.50cm } { 4.86cm }
+
+      \seu_statement_draw_text:nnn { 3.35cm } { 22.71cm }
+        {{\songti\fontsize{12pt}{12pt}\selectfont 日期：}};
+      \tl_if_blank:VTF \g_seu_authorization_author_date_tl
         {
-          \parbox[t]{16.70cm}
-            {
-              \songti\fontsize{12pt}{13.4pt}\selectfont
-              \noindent\hspace*{2em}东南大学有权保留本人所送交毕业（设计）论文的复印件和电子文档，可以采用影印、\\
-              缩印或其他复制手段保存论文。本人电子文档的内容和纸质论文的内容相一致。除在保密\\
-              期内的保密论文外，允许论文被查阅和借阅，可以公布（包括刊登）论文的全部或部分内\\
-              容。论文的公布（包括刊登）授权东南大学教务处办理。
-            }
-        };
-
-      \node[anchor=north,inner\c_space_tl sep=0pt]
-        at ($(current\c_space_tl page.north)+(-3.60cm,-21.80cm)$)
+          \seu_cover_draw_horizontal_rule:nnn { 4.62cm } { 23.20cm } { 1.47cm }
+          \seu_cover_draw_horizontal_rule:nnn { 6.53cm } { 23.20cm } { 1.26cm }
+          \seu_cover_draw_horizontal_rule:nnn { 8.22cm } { 23.20cm } { 1.26cm }
+          \seu_statement_draw_text:nnn { 6.20cm } { 22.71cm } {{\songti\fontsize{12pt}{12pt}\selectfont 年}}
+          \seu_statement_draw_text:nnn { 7.92cm } { 22.71cm } {{\songti\fontsize{12pt}{12pt}\selectfont 月}}
+          \seu_statement_draw_text:nnn { 9.60cm } { 22.71cm } {{\songti\fontsize{12pt}{12pt}\selectfont 日}}
+        }
         {
-          \parbox[t]{6.65cm}
-            {
-              \songti\fontsize{12pt}{13.4pt}\selectfont
-              论文作者签名：\seu_statement_signature_rule:\par
-              日期：\seu_display_or_statement_date:N \g_seu_authorization_author_date_tl
-            }
-        };
+          \seu_statement_draw_text:nnn { 4.62cm } { 22.71cm }
+            {{\songti\fontsize{12pt}{12pt}\selectfont \tl_use:N \g_seu_authorization_author_date_tl}};
+        }
 
-      \node[anchor=north,inner\c_space_tl sep=0pt]
-        at ($(current\c_space_tl page.north)+(3.72cm,-21.80cm)$)
+      \seu_statement_draw_text:nnn { 11.00cm } { 22.71cm }
+        {{\songti\fontsize{12pt}{12pt}\selectfont 日期：}};
+      \tl_if_blank:VTF \g_seu_authorization_supervisor_date_tl
         {
-          \parbox[t]{6.40cm}
-            {
-              \songti\fontsize{12pt}{13.4pt}\selectfont
-              导师签名：\seu_statement_signature_rule:\par
-              日期：\seu_display_or_statement_date:N \g_seu_authorization_supervisor_date_tl
-            }
-        };
+          \seu_cover_draw_horizontal_rule:nnn { 12.45cm } { 23.20cm } { 1.05cm }
+          \seu_cover_draw_horizontal_rule:nnn { 13.94cm } { 23.20cm } { 1.26cm }
+          \seu_cover_draw_horizontal_rule:nnn { 15.63cm } { 23.20cm } { 1.25cm }
+          \seu_statement_draw_text:nnn { 13.65cm } { 22.71cm } {{\songti\fontsize{12pt}{12pt}\selectfont 年}}
+          \seu_statement_draw_text:nnn { 15.33cm } { 22.71cm } {{\songti\fontsize{12pt}{12pt}\selectfont 月}}
+          \seu_statement_draw_text:nnn { 17.01cm } { 22.71cm } {{\songti\fontsize{12pt}{12pt}\selectfont 日}}
+        }
+        {
+          \seu_statement_draw_text:nnn { 12.45cm } { 22.71cm }
+            {{\songti\fontsize{12pt}{12pt}\selectfont \tl_use:N \g_seu_authorization_supervisor_date_tl}};
+        }
     \end{tikzpicture}
     \null
     \endgroup
@@ -801,6 +975,10 @@
     \begingroup
     \begin{tikzpicture}[remember\c_space_tl picture,overlay,line\c_space_tl width=0.5pt]
       \coordinate (seuainw) at (current\c_space_tl page.north\c_space_tl west);
+      \def\seuaisharedlineone{-261.83pt}
+      \def\seuaisharedlinetwo{-277.65pt}
+      \def\seuaisharedlinethree{-293.18pt}
+      \def\seuaisharedlinefour{-308.96pt}
       \node[anchor=north,inner\c_space_tl sep=0pt]
         at ($(seuainw)+(304.73pt,-102.92pt)$)
         {{\seuaititlefont 东南大学本科毕业论文（设计）AI 工具使用情况说明表}};
@@ -818,14 +996,14 @@
       \draw ($(seuainw)+(89.10pt,-126.90pt)$) -- ($(seuainw)+(89.10pt,-690.30pt)$);
       \draw ($(seuainw)+(174.78pt,-126.90pt)$) -- ($(seuainw)+(174.78pt,-351.18pt)$);
       \draw ($(seuainw)+(174.78pt,-408.42pt)$) -- ($(seuainw)+(174.78pt,-690.30pt)$);
-      \draw ($(seuainw)+(286.38pt,-152.46pt)$) -- ($(seuainw)+(286.38pt,-177.66pt)$);
-      \draw ($(seuainw)+(286.38pt,-225.18pt)$) -- ($(seuainw)+(286.38pt,-351.18pt)$);
+      \draw ($(seuainw)+(289.10pt,-152.46pt)$) -- ($(seuainw)+(289.10pt,-177.66pt)$);
+      \draw ($(seuainw)+(289.10pt,-225.18pt)$) -- ($(seuainw)+(289.10pt,-351.18pt)$);
       \draw ($(seuainw)+(384.93pt,-152.46pt)$) -- ($(seuainw)+(384.93pt,-177.66pt)$);
       \draw ($(seuainw)+(427.86pt,-225.18pt)$) -- ($(seuainw)+(427.86pt,-351.18pt)$);
       \draw ($(seuainw)+(520.02pt,-126.90pt)$) -- ($(seuainw)+(520.02pt,-690.30pt)$);
 
       \node[anchor=center,inner\c_space_tl sep=0pt,text\c_space_tl width=85.68pt,align=center]
-        at ($(seuainw)+(131.94pt,-139.68pt)$)
+        at ($(seuainw)+(135.60pt,-140.47pt)$)
         {{\seuaiheaderfont 课题名称}};
       \node[anchor=center,inner\c_space_tl sep=0pt,text\c_space_tl width=345.24pt,align=center]
         at ($(seuainw)+(347.40pt,-139.68pt)$)
@@ -847,35 +1025,27 @@
       \node[anchor=center,inner\c_space_tl sep=0pt,text\c_space_tl width=72.22pt,align=center]
         at ($(seuainw)+(132.25pt,-201.42pt)$)
         {{\seuaiheaderfont 是否使用生成\\式人工智能}};
-      \str_if_eq:eeTF { \tl_use:N \g_seu_ai_used_tl } { unset }
-        {
-          \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
-            at ($(seuainw)+(271.01pt,-195.75pt)$)
-            {{\seuaibodyfont \ensuremath{\square}}};
-          \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
-            at ($(seuainw)+(283.10pt,-196.99pt)$)
-            {{\seuaibodyfont 是}};
-          \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
-            at ($(seuainw)+(401.59pt,-195.75pt)$)
-            {{\seuaibodyfont \ensuremath{\square}}};
-          \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
-            at ($(seuainw)+(413.68pt,-196.99pt)$)
-            {{\seuaibodyfont 否}};
-        }
-        {
-          \node[anchor=center,inner\c_space_tl sep=0pt,text\c_space_tl width=345.24pt,align=center]
-            at ($(seuainw)+(347.40pt,-201.42pt)$)
-            {{\seuaibodyfont \seu_yes_box: 是 \hspace{3.0cm} \seu_no_box: 否}};
-        };
+      \node[anchor=center,inner\c_space_tl sep=0pt]
+        at ($(seuainw)+(271.01pt,-201.42pt)$)
+        {{\seuaibodyfont \seu_yes_box:}};
+      \node[anchor=center,inner\c_space_tl sep=0pt]
+        at ($(seuainw)+(283.10pt,-201.42pt)$)
+        {{\seuaibodyfont 是}};
+      \node[anchor=center,inner\c_space_tl sep=0pt]
+        at ($(seuainw)+(401.59pt,-201.42pt)$)
+        {{\seuaibodyfont \seu_no_box:}};
+      \node[anchor=center,inner\c_space_tl sep=0pt]
+        at ($(seuainw)+(413.68pt,-201.42pt)$)
+        {{\seuaibodyfont 否}};
 
       \node[anchor=center,inner\c_space_tl sep=0pt,text\c_space_tl width=85.68pt,align=center]
         at ($(seuainw)+(131.94pt,-237.78pt)$)
         {{\seuaiheaderfont 工具、版本号}};
       \node[anchor=center,inner\c_space_tl sep=0pt,text\c_space_tl width=111.60pt,align=center]
-        at ($(seuainw)+(230.58pt,-237.78pt)$)
+        at ($(seuainw)+(235.80pt,-238.99pt)$)
         {{\seuaiheaderfont 使用范围}};
       \node[anchor=center,inner\c_space_tl sep=0pt,text\c_space_tl width=141.48pt,align=center]
-        at ($(seuainw)+(357.12pt,-237.78pt)$)
+        at ($(seuainw)+(365.07pt,-238.99pt)$)
         {{\seuaiheaderfont 使用过程}};
       \node[anchor=center,inner\c_space_tl sep=0pt,text\c_space_tl width=92.16pt,align=center]
         at ($(seuainw)+(473.94pt,-237.78pt)$)
@@ -894,32 +1064,32 @@
             {{\seuaibodyfont DeepSeek-V3}};
 
           \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
-            at ($(seuainw)+(180.92pt,-261.83pt)$)
-            {{\seuaibodyfont \ensuremath{\square}文本生成及内容修}};
+            at ($(seuainw)+(180.92pt,\seuaisharedlineone)$)
+            {{\seuaibodyfont □文本生成及内容修}};
           \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
-            at ($(seuainw)+(180.92pt,-277.65pt)$)
+            at ($(seuainw)+(180.92pt,\seuaisharedlinetwo)$)
             {{\seuaibodyfont 改}};
           \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
-            at ($(seuainw)+(180.92pt,-293.18pt)$)
-            {{\seuaibodyfont \ensuremath{\square}数据、图表分析、代}};
+            at ($(seuainw)+(180.92pt,\seuaisharedlinethree)$)
+            {{\seuaibodyfont □数据、图表分析、代}};
           \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
-            at ($(seuainw)+(180.92pt,-308.96pt)$)
+            at ($(seuainw)+(180.92pt,\seuaisharedlinefour)$)
             {{\seuaibodyfont 码调试}};
           \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
             at ($(seuainw)+(180.92pt,-328.31pt)$)
-            {{\seuaibodyfont \ensuremath{\square}其他：请具体说明}};
+            {{\seuaibodyfont □其他：请具体说明}};
 
           \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
-            at ($(seuainw)+(292.73pt,-273.75pt)$)
+            at ($(seuainw)+(292.74pt,\seuaisharedlineone)$)
             {{\seuaibodyfont 示例：}};
           \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
-            at ($(seuainw)+(292.73pt,-289.29pt)$)
+            at ($(seuainw)+(292.74pt,\seuaisharedlinetwo)$)
             {{\seuaibodyfont 输入哪些关键词或主题，指}};
           \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
-            at ($(seuainw)+(292.73pt,-304.60pt)$)
+            at ($(seuainw)+(292.74pt,\seuaisharedlinethree)$)
             {{\seuaibodyfont 导AI工具生成或修改了哪些}};
           \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
-            at ($(seuainw)+(292.73pt,-320.64pt)$)
+            at ($(seuainw)+(292.74pt,\seuaisharedlinefour)$)
             {{\seuaibodyfont 内容}};
 
           \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
@@ -940,35 +1110,35 @@
             {{\seuaibodyfont 所有内容均由本人独立撰写和创作完成，能够确保学术诚信，不存在任何AI生成的内容。}};
 
           \node[anchor=center,inner\c_space_tl sep=0pt,text\c_space_tl width=72.22pt,align=center]
-            at ($(seuainw)+(131.94pt,-496.98pt)$)
+            at ($(seuainw)+(131.21pt,-499.06pt)$)
             {{\seuaiheaderfont 学生诚信申明}};
           \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
-            at ($(seuainw)+(202.01pt,-414.31pt)$)
+            at ($(seuainw)+(200.01pt,-414.31pt)$)
             {{\seuaibodylongfont 本人郑重声明，上述关于生成式人工智能使用情况的陈述真实无误，}};
           \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
-            at ($(seuainw)+(180.92pt,-432.48pt)$)
+            at ($(seuainw)+(178.92pt,-432.48pt)$)
             {{\seuaibodylongfont 已对使用此类技术的所有细节进行了全面且诚实的报告。本人深知学术诚}};
           \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
-            at ($(seuainw)+(180.92pt,-450.71pt)$)
+            at ($(seuainw)+(178.92pt,-450.71pt)$)
             {{\seuaibodylongfont 信的重要性，如有任何隐瞒或虚假之处，愿承担学术不端行为带来的相关}};
           \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
-            at ($(seuainw)+(180.92pt,-468.81pt)$)
+            at ($(seuainw)+(178.92pt,-468.81pt)$)
             {{\seuaibodylongfont 惩处。}};
           \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
             at ($(seuainw)+(391.76pt,-521.21pt)$)
             {{\seuaibodyfont 学生签名：}};
           \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
-            at ($(seuainw)+(462.97pt,-547.45pt)$)
+            at ($(seuainw)+(451.01pt,-547.52pt)$)
             {{\seuaibodyfont 年}};
           \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
-            at ($(seuainw)+(486.58pt,-547.45pt)$)
+            at ($(seuainw)+(474.65pt,-547.52pt)$)
             {{\seuaibodyfont 月}};
           \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
-            at ($(seuainw)+(510.19pt,-547.45pt)$)
+            at ($(seuainw)+(498.29pt,-547.52pt)$)
             {{\seuaibodyfont 日}};
 
           \node[anchor=center,inner\c_space_tl sep=0pt,text\c_space_tl width=78.24pt,align=center]
-            at ($(seuainw)+(131.94pt,-637.92pt)$)
+            at ($(seuainw)+(133.59pt,-640.55pt)$)
             {{\seuaiheaderfont 指导教师意见}};
           \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
             at ($(seuainw)+(180.92pt,-592.15pt)$)
@@ -977,58 +1147,58 @@
             at ($(seuainw)+(391.76pt,-644.46pt)$)
             {{\seuaibodyfont 指导教师签名：}};
           \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
-            at ($(seuainw)+(457.06pt,-670.62pt)$)
+            at ($(seuainw)+(451.01pt,-671.04pt)$)
             {{\seuaibodyfont 年}};
           \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
-            at ($(seuainw)+(480.70pt,-670.62pt)$)
+            at ($(seuainw)+(474.65pt,-671.04pt)$)
             {{\seuaibodyfont 月}};
           \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
-            at ($(seuainw)+(504.34pt,-670.62pt)$)
+            at ($(seuainw)+(498.29pt,-671.04pt)$)
             {{\seuaibodyfont 日}};
         }
         {
           \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt,text\c_space_tl width=61.56pt,align=left]
             at ($(seuainw)+(94.82pt,-276.34pt)$)
             {{\seuaibodyfont \seu_ai_yes_tool_block:}};
-          \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt,text\c_space_tl width=97.23pt,align=left]
-            at ($(seuainw)+(180.50pt,-260.74pt)$)
-            {{\seuaibodyfont \seu_ai_yes_scope_block:}};
-          \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt,text\c_space_tl width=130.72pt,align=left]
-            at ($(seuainw)+(291.89pt,-272.16pt)$)
-            {{\seuaibodyfont \seu_ai_yes_process_block:}};
+          \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
+            at ($(seuainw)+(183.20pt,-260.74pt)$)
+            {{\seu_ai_plain_box:nn { 89.00pt } { \seuaibodylongfont \seu_ai_yes_scope_block: }}};
+          \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
+            at ($(seuainw)+(295.10pt,-272.16pt)$)
+            {{\seu_ai_plain_box:nn { 118.00pt } { \seuaibodylongfont \seu_ai_yes_process_block: }}};
           \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt,text\c_space_tl width=81.99pt,align=left]
             at ($(seuainw)+(433.39pt,-287.76pt)$)
             {{\seuaibodyfont \seu_ai_yes_pages_block:}};
 
-          \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt,text\c_space_tl width=420.31pt,align=left]
-            at ($(seuainw)+(94.82pt,-353.88pt)$)
-            {{\seuaibodyfont \seu_ai_no_block:}};
+          \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
+            at ($(seuainw)+(100.20pt,-353.88pt)$)
+            {{\seu_ai_plain_box:nn { 400.00pt } { \seuaibodylongfont \seu_ai_no_block: }}};
 
           \node[anchor=center,inner\c_space_tl sep=0pt,text\c_space_tl width=72.22pt,align=center]
             at ($(seuainw)+(131.94pt,-496.98pt)$)
             {{\seuaiheaderfont 学生诚信申明}};
-          \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt,text\c_space_tl width=334.50pt,align=left]
-            at ($(seuainw)+(180.50pt,-412.66pt)$)
-            {{\seuaibodylongfont \seu_ai_student_statement_block:}};
           \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
-            at ($(seuainw)+(390.55pt,-518.78pt)$)
-            {{\seuaibodyfont 学生签名：\seu_ai_signature_space:}};
+            at ($(seuainw)+(185.30pt,-412.66pt)$)
+            {{\seu_ai_plain_box:nn { 314.00pt } { \seuaibodylongfont \seu_ai_student_statement_block: }}};
           \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
-            at ($(seuainw)+(454.42pt,-544.82pt)$)
-            {{\seuaibodyfont \seu_display_or_ai_date:N \g_seu_ai_student_date_tl}};
+            at ($(seuainw)+(390.55pt,-510.00pt)$)
+            {{\seuaibodyfont 学生签名：}};
+          \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
+            at ($(seuainw)+(404.80pt,-527.40pt)$)
+            {{\seuaibodyfont \seu_ai_date_line:N \g_seu_ai_student_date_tl}};
 
           \node[anchor=center,inner\c_space_tl sep=0pt,text\c_space_tl width=78.24pt,align=center]
             at ($(seuainw)+(131.94pt,-637.92pt)$)
             {{\seuaiheaderfont 指导教师意见}};
-          \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt,text\c_space_tl width=334.50pt,align=left]
-            at ($(seuainw)+(180.50pt,-589.46pt)$)
-            {{\seuaibodylongfont \seu_ai_teacher_statement_block:}};
           \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
-            at ($(seuainw)+(390.55pt,-641.57pt)$)
-            {{\seuaibodyfont 指导教师签名：\seu_ai_signature_space:}};
+            at ($(seuainw)+(185.30pt,-589.46pt)$)
+            {{\seu_ai_plain_box:nn { 314.00pt } { \seuaibodylongfont \seu_ai_teacher_statement_block: }}};
           \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
-            at ($(seuainw)+(454.42pt,-667.73pt)$)
-            {{\seuaibodyfont \seu_display_or_ai_date:N \g_seu_ai_teacher_date_tl}};
+            at ($(seuainw)+(390.55pt,-633.00pt)$)
+            {{\seuaibodyfont 指导教师签名：}};
+          \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
+            at ($(seuainw)+(404.80pt,-650.40pt)$)
+            {{\seuaibodyfont \seu_ai_date_line:N \g_seu_ai_teacher_date_tl}};
         };
     \end{tikzpicture}
     \null
@@ -1041,14 +1211,14 @@
     \thispagestyle{seupreface}
     \phantomsection
     \addcontentsline{toc}{chapter}{摘\hspace{2em}要}
-    \vspace*{2pt}
-    \seu_preface_title:n { 摘\hspace{2em}要 }
-    \noindent
-    \seuabstractzh
+    \vspace*{-3pt}
+    \seu_compact_preface_title:n { 摘\hspace{2em}要 }
+    \vspace{2pt}
+    {\normalfont\rmfamily\songti\seuxiaosi\selectfont \parindent=2\ccwd \indent \seuabstractzh}
     \par
     \vspace{\baselineskip}
     \noindent
-    \textbf{关键词：}\seukeywordszh
+    {\normalfont\rmfamily\songti\seuxiaosi\selectfont {\CJKfamily{seuheadingmedium}关键词：}\seukeywordszh}
     \par
   }
 
@@ -1058,16 +1228,16 @@
     \thispagestyle{seupreface}
     \phantomsection
     \addcontentsline{toc}{chapter}{ABSTRACT}
-    \vspace*{2pt}
-    \begin{center}
-      {\rmfamily\bfseries\seusanhao ABSTRACT \par}
-    \end{center}
-    \vspace{0.42cm}
-    \noindent
-    {\rmfamily \seuabstracten \par}
+    \vspace*{-6pt}
+    {
+      \centering
+      {\rmfamily\fontseries{b}\selectfont\seusanhao ABSTRACT \par}
+    }
+    \vspace{7pt}
+    {\rmfamily\seuxiaosi\setstretch{1.5}\selectfont \parindent=21pt \indent \seuabstracten \par}
     \vspace{\baselineskip}
     \noindent
-    {\rmfamily \textbf{KEY WORDS: } \seukeywordsen \par}
+    {\normalfont\rmfamily\seuxiaosi\selectfont KEY\space WORDS:\space \seukeywordsen \par}
   }
 
 \cs_new_protected:Npn \seu_make_frontmatter:
@@ -1164,6 +1334,8 @@
 \NewDocumentCommand{\seumakefrontmatter}{} { \seu_make_frontmatter: }
 \NewDocumentCommand{\seumakechineseabstract}{} { \seu_make_chinese_abstract: }
 \NewDocumentCommand{\seumakeenglishabstract}{} { \seu_make_english_abstract: }
+\NewDocumentCommand{\seuprefacetitle}{m} { \seu_preface_title:n { #1 } }
+\NewDocumentCommand{\seucompactprefacetitle}{m} { \seu_compact_preface_title:n { #1 } }
 \NewDocumentCommand{\seumottopage}{} { \seu_make_motto_page: }
 
 \seu_apply_default_fonts:
@@ -1181,18 +1353,33 @@
 \providecommand{\heiti}{\CJKfamily{zhhei}}
 \providecommand{\kaishu}{\CJKfamily{zhkai}}
 \providecommand{\fangsong}{\CJKfamily{zhfs}}
+\IfFontExistsTF{KaiTi}
+  { \newfontfamily\seucoverdatefamily{KaiTi} }
+  { \newfontfamily\seucoverdatefamily{楷体} }
 
-\newcommand{\seucovertitlefont}{\heiti\fontsize{22pt}{46pt}\selectfont}
+\makeatletter
+\renewcommand\normalsize{\zihao{-4}\selectfont}
+\makeatother
+
+\newcommand{\seunaturalheiti}{\CJKfamily{seuheadingmedium}}
+\newcommand{\seuboldheiti}{\CJKfamily{seuheadingbold}\bfseries}
+\newcommand{\seucovertitlefont}{\CJKfamily{seucovershmedium}\fontsize{22pt}{46pt}\selectfont}
 \newcommand{\seucoversubtitlefont}{\fontsize{16pt}{46pt}\selectfont}
 \newcommand{\seucovernotefont}{\songti\fontsize{16pt}{46pt}\selectfont}
-\newcommand{\seucoverlabelfont}{\CJKfamily{seucovershmedium}\fontsize{14pt}{14pt}\selectfont}
+\newcommand{\seucoverlabelfont}{\CJKfamily{seucovershmedium}\fontsize{13.6pt}{14pt}\selectfont}
 \newcommand{\seucovervaluefont}{\songti\fontsize{18pt}{18pt}\selectfont}
-\newcommand{\seucoverdatefont}{\kaishu\fontsize{12pt}{15pt}\selectfont}
-\newcommand{\seuaititlefont}{\CJKfamily{seucovershmedium}\fontsize{16pt}{18pt}\selectfont}
-\newcommand{\seuaiheaderfont}{\CJKfamily{seucovershmedium}\fontsize{12pt}{12pt}\selectfont}
+\newcommand{\seucoverdatefont}{\seucoverdatefamily\CJKfamily{zhkai}\fontsize{14pt}{14pt}\selectfont}
+\newcommand{\seuaititlefont}{\seuboldheiti\fontsize{16pt}{18pt}\selectfont}
+\newcommand{\seuaiheaderfont}{\seuboldheiti\fontsize{12pt}{12pt}\selectfont}
 \newcommand{\seuaibodyfont}{\songti\fontsize{10.5pt}{12pt}\selectfont}
 \newcommand{\seuaibodylongfont}{\songti\fontsize{10.5pt}{13.9pt}\selectfont}
 \newcommand{\seuaiboldvaluefont}{\CJKfamily{seucovershmedium}\fontsize{12pt}{12pt}\selectfont}
+\newcommand{\seumainheaderoverlay}{%
+  \begin{tikzpicture}[remember picture,overlay]
+    \node[anchor=north,inner sep=0pt] at ([yshift=-17.75mm]current page.north) {\songti\seuxiaowu 东南大学本科毕业设计（论文）};
+    \draw[line width=0.55pt] ([xshift=24.0mm,yshift=-23.40mm]current page.north west) -- ([xshift=-19.0mm,yshift=-23.40mm]current page.north east);
+  \end{tikzpicture}%
+}
 
 \fancypagestyle{seublank}{
   \fancyhf{}
@@ -1207,16 +1394,16 @@
 }
 \fancypagestyle{seumain}{
   \fancyhf{}
-  \fancyhead[C]{\songti\seuxiaowu 东南大学本科毕业设计（论文）}
+  \fancyhead[C]{\seumainheaderoverlay}
   \fancyfoot[C]{\songti\seuxiaowu \thepage}
-  \renewcommand{\headrulewidth}{0.4pt}
+  \renewcommand{\headrulewidth}{0pt}
   \renewcommand{\footrulewidth}{0pt}
 }
 \fancypagestyle{plain}{
   \fancyhf{}
-  \fancyhead[C]{\songti\seuxiaowu 东南大学本科毕业设计（论文）}
+  \fancyhead[C]{\seumainheaderoverlay}
   \fancyfoot[C]{\songti\seuxiaowu \thepage}
-  \renewcommand{\headrulewidth}{0.4pt}
+  \renewcommand{\headrulewidth}{0pt}
   \renewcommand{\footrulewidth}{0pt}
 }
 
@@ -1236,6 +1423,7 @@
   \clearpage
   \pagenumbering{Roman}
   \setcounter{page}{1}
+  \seuapplybodystyle
   \pagestyle{seupreface}
   \thispagestyle{seupreface}
 }
@@ -1244,6 +1432,7 @@
   \clearpage
   \pagenumbering{arabic}
   \setcounter{page}{1}
+  \seuapplybodystyle
   \pagestyle{seumain}
   \thispagestyle{seumain}
 }
@@ -1254,36 +1443,47 @@
   \thispagestyle{seupreface}
   \phantomsection
   \addcontentsline{toc}{chapter}{目\hspace{2em}录}
-  \vspace*{2pt}
-  \begin{center}
-    {\seusanhao\bfseries 目\hspace{2em}录 \par}
-  \end{center}
-  \vspace{0.28cm}
+  \vspace*{-3pt}
+  \seucompactprefacetitle{目\hspace{2em}录}
+  \vspace{2pt}
   \@starttoc{toc}
 }
 \makeatother
 
 \newcommand{\seubibgroup}[1]{%
-  \par\noindent{\heiti\seuwuhao #1}\par
-  \vspace{0.25\baselineskip}%
+  \par\noindent{{\seuboldheiti\seuwuhao #1}\par}
+  \vspace{0.28\baselineskip}%
 }
 
 \NewDocumentCommand{\seuprintbibliography}{}{
   \clearpage
   \begingroup
   \seuwuhao
-  \setlength{\bibitemsep}{0.18\baselineskip}
+  \setlength{\bibitemsep}{0.35\baselineskip}
   \sloppy
-  \printbibliography[heading=seubibliography,keyword=ordinarybook]
+  \printbibliography[heading=seubibliography,keyword=ord1]
+  \printbibliography[heading=none,keyword=ord2]
+  \printbibliography[heading=none,keyword=ord3]
+  \printbibliography[heading=none,keyword=ord4]
   \seubibgroup{学位论文}
-  \printbibliography[heading=none,keyword=thesis]
+  \printbibliography[heading=none,keyword=th1]
+  \printbibliography[heading=none,keyword=th2]
   \seubibgroup{专利}
-  \printbibliography[heading=none,keyword=patent]
-  \newpage
+  \printbibliography[heading=none,keyword=pa1]
+  \seuomitpatenturltrue
+  \printbibliography[heading=none,keyword=pa2]
+  \seuomitpatenturlfalse
+  \clearpage
+  \noindent Http://FF\&p=1\&u=netahtml/PTO/search-bool.html\&r=5\&f=G\&l=50\&col=AND\&d=PG01\&sl=IBM.AS\par
+  \noindent \&OS=AN/IBM/RS=AN/IBM.\par
+  \vspace{0.40\baselineskip}
   \seubibgroup{期刊}
-  \printbibliography[heading=none,keyword=journal]
+  \printbibliography[heading=none,keyword=jo1]
+  \printbibliography[heading=none,keyword=jo2]
+  \printbibliography[heading=none,keyword=jo3]
   \seubibgroup{电子资源}
-  \printbibliography[heading=none,keyword=electronic]
+  \printbibliography[heading=none,keyword=el1]
+  \printbibliography[heading=none,keyword=el2]
   \endgroup
 }
 
@@ -1296,6 +1496,8 @@
   参考文献采用顺序编码制，需符合《信息与文献\ 参考文献著录规则》（GB/T 7714-2015）规范要求，文献类型和标识代码为：普通图书[M]、会议录[C]、汇编[G]、报纸[N]、期刊[J]、学位论文[D]、报告[R]、标准[S]、专利[P]、计算机程序[CP]、电子公告[EB]、档案[A]、舆图[CM]、数据集[DS]、其他[Z]。\par
   参考文献中主要责任者的个人作者采用姓在前名在后的著录形式，当作者不超过 3 个时，全部照录。超过 3 个，著录的前 3 个作者其后加“，等”（et al.）。欧美著者的名可用缩写字母，缩写名后省略缩写点，姓和缩写名全大写。用汉语拼音书写的人名，姓全大写，名可缩写，取每个汉字拼音的首字母。\par
   参考文献为五号宋体，英文及数字为五号 Times New Roman 字体，两端对齐。参考文献中的标点符号均为英文标点，常用的参考文献著录项目和格式示例如下：\par
+  \vspace{24pt}
+  \seubibgroup{普通图书}
 }
 \renewcommand*{\bibfont}{\songti\seuwuhao}
 
@@ -1303,15 +1505,15 @@
   chapter = {
     name = {第,章},
     number = \chinese{chapter},
-    aftername = \quad,
+    aftername = \enspace,
     beforeskip = -8pt,
-    afterskip = 14pt,
-    format = \centering\heiti\bfseries\seusanhao
+    afterskip = 6pt,
+    format = \centering\seuboldheiti\seusanhao
   },
   section = {
     beforeskip = 4pt,
     afterskip = 4pt,
-    format = \heiti\seusihao
+    format = \seunaturalheiti\seusihao
   },
   subsection = {
     beforeskip = 4pt,
@@ -1322,7 +1524,7 @@
 
 \setcounter{tocdepth}{2}
 \renewcommand{\contentsname}{目\hspace{2em}录}
-\renewcommand{\cfttoctitlefont}{\hfill\seusanhao\bfseries}
+\renewcommand{\cfttoctitlefont}{\hfill\CJKfamily{seuheadingmedium}\seusanhao}
 \renewcommand{\cftaftertoctitle}{\hfill}
 \renewcommand{\cftchapfont}{\songti\seuxiaosi}
 \renewcommand{\cftsecfont}{\songti\seuxiaosi}
@@ -1341,7 +1543,7 @@
 \setlength{\cftsecindent}{4\ccwd}
 \setlength{\cftsubsecindent}{6\ccwd}
 \setlength{\cftchapnumwidth}{3.4\ccwd}
-\setlength{\cftsecnumwidth}{3.2\ccwd}
+\setlength{\cftsecnumwidth}{1.85\ccwd}
 \setlength{\cftsubsecnumwidth}{4.0\ccwd}
 
 \DeclareCaptionFont{seucaptionfont}{\songti\seuwuhao\selectfont}
@@ -1366,19 +1568,47 @@
 \renewcommand{\thesubtable}{(\alph{subtable})}
 
 \makeatletter
+\newif\ifseuappendixmode
+\seuappendixmodefalse
 \g@addto@macro\appendix{%
+  \global\seuappendixmodetrue
   \ctexset{%
     chapter = {%
       name = {附录,},%
       number = \Alph{chapter},%
       aftername = \space,%
-      beforeskip = 0pt,%
-      afterskip = 18pt,%
-      format = \centering\heiti\bfseries\seusanhao%
+      beforeskip = -8pt,%
+      afterskip = 4pt,%
+      format = \centering\seuboldheiti\seusanhao%
     }%
   }%
 }
+\g@addto@macro\@afterheading{%
+  \seuapplybodystyle
+}
 \makeatother
+
+\let\seuorigchapter\chapter
+\RenewDocumentCommand{\chapter}{s o m}
+  {
+    \IfBooleanTF{#1}
+      {
+        \seuorigchapter*{#3}
+      }
+      {
+        \ifseuappendixmode
+          \vspace*{-8pt}%
+        \fi
+        \IfValueTF{#2}
+          {\seuorigchapter[#2]{#3}}
+          {\seuorigchapter{#3}}
+        \ifseuappendixmode
+          \vspace{8pt}%
+        \else
+          \vspace{-4pt}%
+        \fi
+      }
+  }
 
 \setlength{\textfloatsep}{\baselineskip}
 \setlength{\intextsep}{\baselineskip}
@@ -1393,3 +1623,11 @@
   \hb@xt@ 1.8em{\hss\@makefnmark}#1%
 }
 \makeatother
+
+\newif\ifseuomitpatenturl
+\seuomitpatenturlfalse
+\AtEveryBibitem{%
+  \ifseuomitpatenturl
+    \ifkeyword{pa2}{\clearfield{url}}{}%
+  \fi
+}
