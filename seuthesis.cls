@@ -66,10 +66,6 @@
 \tl_new:N \g_seu_major_tl
 \tl_new:N \g_seu_supervisor_tl
 \tl_new:N \g_seu_date_range_tl
-\tl_new:N \g_seu_abstract_zh_tl
-\tl_new:N \g_seu_keywords_zh_tl
-\tl_new:N \g_seu_abstract_en_tl
-\tl_new:N \g_seu_keywords_en_tl
 \tl_new:N \g_seu_cover_date_tl
 \tl_new:N \g_seu_originality_date_tl
 \tl_new:N \g_seu_authorization_author_date_tl
@@ -88,6 +84,8 @@
 \tl_new:N \g_seu_ai_scope_display_tl
 \tl_new:N \g_seu_ai_process_display_tl
 \tl_new:N \g_seu_ai_pages_display_tl
+\seq_new:N \g_seu_keywords_zh_seq
+\seq_new:N \g_seu_keywords_en_seq
 \seq_new:N \g_seu_ai_items_seq
 \seq_new:N \g_seu_ai_text_items_seq
 
@@ -106,6 +104,8 @@
 \tl_gset:Nn \g_seu_cover_bg_image_tl { cover-1.png }
 \tl_gset:Nn \g_seu_motto_image_tl { cover-2.png }
 \tl_gset:Nn \g_seu_ai_used_tl { unset }
+\tl_const:Nn \c_seu_abstract_zh_file_tl { content/abstract_zh.tex }
+\tl_const:Nn \c_seu_abstract_en_file_tl { content/abstract_en.tex }
 
 \keys_define:nn { seu/setup }
   {
@@ -117,10 +117,6 @@
     major       .tl_gset:N = \g_seu_major_tl,
     supervisor  .tl_gset:N = \g_seu_supervisor_tl,
     date_range  .tl_gset:N = \g_seu_date_range_tl,
-    abstract_zh .tl_gset:N = \g_seu_abstract_zh_tl,
-    keywords_zh .tl_gset:N = \g_seu_keywords_zh_tl,
-    abstract_en .tl_gset:N = \g_seu_abstract_en_tl,
-    keywords_en .tl_gset:N = \g_seu_keywords_en_tl,
     cover_date .tl_gset:N = \g_seu_cover_date_tl,
     originality_date .tl_gset:N = \g_seu_originality_date_tl,
     authorization_author_date .tl_gset:N =
@@ -156,6 +152,92 @@
         Non-distributable~fonts~must~be~installed~in~the~operating~system.
         Distributable/open-source~fonts~must~be~placed~under~the~relative~directory~'fonts/'.
         Lookup~scope:~#2.
+      }
+  }
+
+\cs_new_protected:Npn \seu_required_content_file_error:n #1
+  {
+    \ClassError { seuthesis }
+      { Required~content~file~'#1'~not~found }
+      {
+        Create~the~file~and~write~the~abstract~body~text~in~it.
+        The~template~expects~fixed~summary~files~under~content/~
+        instead~of~inline~abstract~text~inside~\string\seusetup.
+      }
+  }
+
+\cs_new_protected:Npn \seu_input_required_file:n #1
+  {
+    \file_if_exist:nTF { #1 }
+      { \input{#1} }
+      { \seu_required_content_file_error:n {#1} }
+  }
+
+\cs_new_protected:Npn \seu_keyword_missing_error:
+  {
+    \ClassError { seuthesis }
+      { No~abstract~keywords~provided }
+      {
+        Add~at~least~one~keyword~pair~with~
+        \string\addkey\{中文关键词\}\{EnglishKeyword\}~
+        before~\string\begin\{document\}.
+      }
+  }
+
+\cs_new_protected:Npn \seu_keyword_blank_error:nn #1#2
+  {
+    \ClassError { seuthesis }
+      { Empty~keyword~argument~in~\string\addkey }
+      {
+        Both~the~Chinese~and~English~keyword~arguments~must~be~non-empty.
+        Received:~'#1'~and~'#2'.
+      }
+  }
+
+\cs_new_protected:Npn \seu_keyword_count_mismatch_error:
+  {
+    \ClassError { seuthesis }
+      { Chinese~and~English~keyword~counts~do~not~match }
+      {
+        Keyword~pairs~must~be~added~through~
+        \string\addkey\{中文关键词\}\{EnglishKeyword\}.
+      }
+  }
+
+\cs_new_protected:Npn \seu_assert_keywords_ready:
+  {
+    \seq_if_empty:NT \g_seu_keywords_zh_seq
+      { \seu_keyword_missing_error: }
+    \int_compare:nNnF
+      { \seq_count:N \g_seu_keywords_zh_seq }
+      =
+      { \seq_count:N \g_seu_keywords_en_seq }
+      { \seu_keyword_count_mismatch_error: }
+  }
+
+\cs_new:Npn \seu_keywords_join_zh:
+  {
+    \seu_assert_keywords_ready:
+    \seq_use:Nn \g_seu_keywords_zh_seq {，}
+  }
+
+\cs_new:Npn \seu_keywords_join_en:
+  {
+    \seu_assert_keywords_ready:
+    \seq_use:Nn \g_seu_keywords_en_seq {,~}
+  }
+
+\cs_new_protected:Npn \seu_add_keyword_pair:nn #1#2
+  {
+    \tl_if_blank:nTF {#1}
+      { \seu_keyword_blank_error:nn {#1} {#2} }
+      {
+        \tl_if_blank:nTF {#2}
+          { \seu_keyword_blank_error:nn {#1} {#2} }
+          {
+            \seq_gput_right:Nn \g_seu_keywords_zh_seq {#1}
+            \seq_gput_right:Nn \g_seu_keywords_en_seq {#2}
+          }
       }
   }
 
@@ -1215,7 +1297,7 @@
     \vspace*{-3pt}
     \seu_compact_preface_title:n { 摘\hspace{2em}要 }
     \vspace{2pt}
-    {\normalfont\rmfamily\songti\seuxiaosi\selectfont \parindent=2\ccwd \indent \seuabstractzh}
+    {\normalfont\rmfamily\songti\seuxiaosi\selectfont \parindent=2\ccwd \indent \seu_input_required_file:n { \c_seu_abstract_zh_file_tl }}
     \par
     \vspace{\baselineskip}
     \noindent
@@ -1235,7 +1317,7 @@
       {\rmfamily\fontseries{b}\selectfont\seusanhao ABSTRACT \par}
     }
     \vspace{7pt}
-    {\rmfamily\seuxiaosi\setstretch{1.5}\selectfont \parindent=21pt \indent \seuabstracten \par}
+    {\rmfamily\seuxiaosi\setstretch{1.5}\selectfont \parindent=21pt \indent \seu_input_required_file:n { \c_seu_abstract_en_file_tl } \par}
     \vspace{\baselineskip}
     \noindent
     {\normalfont\rmfamily\seuxiaosi\selectfont KEY\space WORDS:\space \seukeywordsen \par}
@@ -1302,10 +1384,8 @@
 \NewDocumentCommand{\seumajor}{}       { \tl_use:N \g_seu_major_tl }
 \NewDocumentCommand{\seusupervisor}{}  { \tl_use:N \g_seu_supervisor_tl }
 \NewDocumentCommand{\seudaterange}{}   { \tl_use:N \g_seu_date_range_tl }
-\NewDocumentCommand{\seuabstractzh}{}  { \tl_use:N \g_seu_abstract_zh_tl }
-\NewDocumentCommand{\seukeywordszh}{}  { \tl_use:N \g_seu_keywords_zh_tl }
-\NewDocumentCommand{\seuabstracten}{}  { \tl_use:N \g_seu_abstract_en_tl }
-\NewDocumentCommand{\seukeywordsen}{}  { \tl_use:N \g_seu_keywords_en_tl }
+\NewDocumentCommand{\seukeywordszh}{}  { \seu_keywords_join_zh: }
+\NewDocumentCommand{\seukeywordsen}{}  { \seu_keywords_join_en: }
 \NewDocumentCommand{\seucoverdate}{}   { \tl_use:N \g_seu_cover_date_tl }
 \NewDocumentCommand{\seuaisubject}{}   { \tl_use:N \g_seu_ai_subject_tl }
 \NewDocumentCommand{\seumottoimage}{}  { \tl_use:N \g_seu_motto_image_tl }
@@ -1320,6 +1400,8 @@
   { \setCJKmainfont { #1 } }
 \NewDocumentCommand{\seusetcjksansfont}{m}
   { \setCJKsansfont { #1 } }
+\NewDocumentCommand{\addkey}{m m}
+  { \seu_add_keyword_pair:nn {#1} {#2} }
 
 \NewDocumentCommand{\seuerhao}{}   { \zihao{2} }
 \NewDocumentCommand{\seusanhao}{}  { \zihao{3} }
@@ -1359,6 +1441,7 @@
   { \newfontfamily\seucoverdatefamily{楷体} }
 
 \makeatletter
+\@onlypreamble\addkey
 \renewcommand\normalsize{\zihao{-4}\selectfont}
 \makeatother
 
