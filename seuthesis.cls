@@ -410,7 +410,7 @@
     \tl_clear:N \l_seu_date_year_tl
     \tl_clear:N \l_seu_date_month_tl
     \tl_clear:N \l_seu_date_day_tl
-    \tl_set:Nn \l_seu_date_normalized_tl {#1}
+    \tl_set:Ne \l_seu_date_normalized_tl {#1}
     \tl_trim_spaces:N \l_seu_date_normalized_tl
     \tl_if_blank:VTF \l_seu_date_normalized_tl
       { }
@@ -449,11 +449,36 @@
     \tl_use:N \l_seu_date_day_tl \c_space_tl 日
   }
 
+\cs_new:Npn \seu_statement_date_field:nn #1#2
+  {
+    \smash{ \makebox[#1][c]{\strut #2} }%
+    \smash{ \llap{ \rule[-0.22ex]{#1}{0.15pt} } }
+  }
+
+\cs_new:Npn \seu_statement_date_two_digits:n #1
+  {
+    \tl_if_blank:nTF {#1}
+      { }
+      {
+        \int_compare:nNnTF { \int_eval:n {#1} } < { 10 }
+          { 0 \int_eval:n {#1} }
+          { \int_eval:n {#1} }
+      }
+  }
+
+\cs_new:Npn \seu_statement_date_triplet:nnnnnn #1#2#3#4#5#6
+  {
+    \seu_statement_date_field:nn { #1 } { #2 } 年\hspace{0.28em}
+    \seu_statement_date_field:nn { #3 } { \seu_statement_date_two_digits:n { #4 } } 月\hspace{0.28em}
+    \seu_statement_date_field:nn { #5 } { \seu_statement_date_two_digits:n { #6 } } 日
+  }
+
 \cs_new:Npn \seu_statement_date_segmented:nnn #1#2#3
   {
-    \underline{\makebox[1.05cm][c]{\strut #1}}年\hspace{0.28em}
-    \underline{\makebox[0.95cm][c]{\strut #2}}月\hspace{0.28em}
-    \underline{\makebox[0.95cm][c]{\strut #3}}日
+    \seu_statement_date_triplet:nnnnnn
+      { 1.47cm } { #1 }
+      { 1.05cm } { #2 }
+      { 1.05cm } { #3 }
   }
 
 \cs_new:Npn \seu_display_or_statement_date:N #1
@@ -590,11 +615,22 @@
       anchor=center,
       inner\c_space_tl xsep=1.2pt,
       inner\c_space_tl ysep=0.4pt,
-      outer\c_space_tl sep=0pt,
-      fill=white
+      outer\c_space_tl sep=0pt
     ]
       at ($(current\c_space_tl page.north\c_space_tl west)+(#1,-#2)$)
       {#3};
+  }
+
+\cs_new_protected:Npn \seu_statement_draw_date_segment:nnnnnn #1#2#3#4#5#6
+  {
+    \node[
+      anchor=north\c_space_tl west,
+      inner\c_space_tl xsep=1.2pt,
+      inner\c_space_tl ysep=0pt,
+      outer\c_space_tl sep=0pt
+    ]
+      at ($(current\c_space_tl page.north\c_space_tl west)+(#1,-#2)$)
+      {{\songti\fontsize{12pt}{12pt}\selectfont \makebox[#3][c]{\strut #4}\hspace{#5}#6}};
   }
 
 \cs_new_protected:Npn \seu_ai_draw_date_triplet:Nn #1#2
@@ -1104,34 +1140,28 @@
 
       \seu_statement_draw_text:nnn { 4.19cm } { 10.96cm }
         {{\songti\fontsize{12pt}{12pt}\selectfont 论文作者签名：}};
-      \seu_cover_draw_horizontal_rule:nnn { 7.06cm } { 11.37cm } { 3.38cm }
+      \seu_cover_draw_horizontal_rule:nnn { 7.06cm } { 11.45cm } { 3.38cm }
       \seu_statement_draw_text:nnn { 11.10cm } { 10.96cm }
         {{\songti\fontsize{12pt}{12pt}\selectfont 日期：}};
       \seu_date_parse:n { \tl_use:N \g_seu_originality_date_tl }
       \bool_if:NTF \l_seu_date_parse_success_bool
         {
-          \seu_cover_draw_horizontal_rule:nnn { 12.45cm } { 11.37cm } { 1.47cm }
-          \seu_cover_draw_horizontal_rule:nnn { 14.35cm } { 11.37cm } { 1.05cm }
-          \seu_cover_draw_horizontal_rule:nnn { 15.83cm } { 11.37cm } { 1.05cm }
-          \seu_statement_draw_rule_value:nnn { 13.185cm } { 11.48cm }
-            {{\songti\fontsize{12pt}{12pt}\selectfont \tl_use:N \l_seu_date_year_tl}}
-          \seu_statement_draw_rule_value:nnn { 14.875cm } { 11.48cm }
-            {{\songti\fontsize{12pt}{12pt}\selectfont \tl_use:N \l_seu_date_month_tl}}
-          \seu_statement_draw_rule_value:nnn { 16.355cm } { 11.48cm }
-            {{\songti\fontsize{12pt}{12pt}\selectfont \tl_use:N \l_seu_date_day_tl}}
-          \seu_statement_draw_text:nnn { 14.02cm } { 10.96cm } {{\songti\fontsize{12pt}{12pt}\selectfont 年}}
-          \seu_statement_draw_text:nnn { 15.49cm } { 10.96cm } {{\songti\fontsize{12pt}{12pt}\selectfont 月}}
-          \seu_statement_draw_text:nnn { 16.96cm } { 10.96cm } {{\songti\fontsize{12pt}{12pt}\selectfont 日}}
+          \seu_statement_draw_text:nnn { 12.45cm } { 10.96cm }
+            {{\songti\fontsize{12pt}{12pt}\selectfont
+              \seu_statement_date_triplet:nnnnnn
+                { 1.47cm } { \tl_use:N \l_seu_date_year_tl }
+                { 1.05cm } { \tl_use:N \l_seu_date_month_tl }
+                { 1.05cm } { \tl_use:N \l_seu_date_day_tl }}}
         }
         {
           \tl_if_blank:VF \g_seu_originality_date_tl
             { \seu_date_invalid:V \g_seu_originality_date_tl }
-          \seu_cover_draw_horizontal_rule:nnn { 12.45cm } { 11.37cm } { 1.47cm }
-          \seu_cover_draw_horizontal_rule:nnn { 14.35cm } { 11.37cm } { 1.05cm }
-          \seu_cover_draw_horizontal_rule:nnn { 15.83cm } { 11.37cm } { 1.05cm }
-          \seu_statement_draw_text:nnn { 14.02cm } { 10.96cm } {{\songti\fontsize{12pt}{12pt}\selectfont 年}}
-          \seu_statement_draw_text:nnn { 15.49cm } { 10.96cm } {{\songti\fontsize{12pt}{12pt}\selectfont 月}}
-          \seu_statement_draw_text:nnn { 16.96cm } { 10.96cm } {{\songti\fontsize{12pt}{12pt}\selectfont 日}}
+          \seu_statement_draw_text:nnn { 12.45cm } { 10.96cm }
+            {{\songti\fontsize{12pt}{12pt}\selectfont
+              \seu_statement_date_triplet:nnnnnn
+                { 1.47cm } { }
+                { 1.05cm } { }
+                { 1.05cm } { }}}
         }
 
       \node[anchor=north,inner\c_space_tl sep=0pt]
@@ -1159,28 +1189,22 @@
       \seu_date_parse:n { \tl_use:N \g_seu_authorization_author_date_tl }
       \bool_if:NTF \l_seu_date_parse_success_bool
         {
-          \seu_cover_draw_horizontal_rule:nnn { 4.62cm } { 23.20cm } { 1.47cm }
-          \seu_cover_draw_horizontal_rule:nnn { 6.53cm } { 23.20cm } { 1.26cm }
-          \seu_cover_draw_horizontal_rule:nnn { 8.22cm } { 23.20cm } { 1.26cm }
-          \seu_statement_draw_rule_value:nnn { 5.355cm } { 23.31cm }
-            {{\songti\fontsize{12pt}{12pt}\selectfont \tl_use:N \l_seu_date_year_tl}}
-          \seu_statement_draw_rule_value:nnn { 7.16cm } { 23.31cm }
-            {{\songti\fontsize{12pt}{12pt}\selectfont \tl_use:N \l_seu_date_month_tl}}
-          \seu_statement_draw_rule_value:nnn { 8.85cm } { 23.31cm }
-            {{\songti\fontsize{12pt}{12pt}\selectfont \tl_use:N \l_seu_date_day_tl}}
-          \seu_statement_draw_text:nnn { 6.20cm } { 22.71cm } {{\songti\fontsize{12pt}{12pt}\selectfont 年}}
-          \seu_statement_draw_text:nnn { 7.92cm } { 22.71cm } {{\songti\fontsize{12pt}{12pt}\selectfont 月}}
-          \seu_statement_draw_text:nnn { 9.60cm } { 22.71cm } {{\songti\fontsize{12pt}{12pt}\selectfont 日}}
+          \seu_statement_draw_text:nnn { 4.62cm } { 22.71cm }
+            {{\songti\fontsize{12pt}{12pt}\selectfont
+              \seu_statement_date_triplet:nnnnnn
+                { 1.47cm } { \tl_use:N \l_seu_date_year_tl }
+                { 1.05cm } { \tl_use:N \l_seu_date_month_tl }
+                { 1.05cm } { \tl_use:N \l_seu_date_day_tl }}}
         }
         {
           \tl_if_blank:VF \g_seu_authorization_author_date_tl
             { \seu_date_invalid:V \g_seu_authorization_author_date_tl }
-          \seu_cover_draw_horizontal_rule:nnn { 4.62cm } { 23.20cm } { 1.47cm }
-          \seu_cover_draw_horizontal_rule:nnn { 6.53cm } { 23.20cm } { 1.26cm }
-          \seu_cover_draw_horizontal_rule:nnn { 8.22cm } { 23.20cm } { 1.26cm }
-          \seu_statement_draw_text:nnn { 6.20cm } { 22.71cm } {{\songti\fontsize{12pt}{12pt}\selectfont 年}}
-          \seu_statement_draw_text:nnn { 7.92cm } { 22.71cm } {{\songti\fontsize{12pt}{12pt}\selectfont 月}}
-          \seu_statement_draw_text:nnn { 9.60cm } { 22.71cm } {{\songti\fontsize{12pt}{12pt}\selectfont 日}}
+          \seu_statement_draw_text:nnn { 4.62cm } { 22.71cm }
+            {{\songti\fontsize{12pt}{12pt}\selectfont
+              \seu_statement_date_triplet:nnnnnn
+                { 1.47cm } { }
+                { 1.05cm } { }
+                { 1.05cm } { }}}
         }
 
       \seu_statement_draw_text:nnn { 11.00cm } { 22.71cm }
@@ -1188,28 +1212,22 @@
       \seu_date_parse:n { \tl_use:N \g_seu_authorization_supervisor_date_tl }
       \bool_if:NTF \l_seu_date_parse_success_bool
         {
-          \seu_cover_draw_horizontal_rule:nnn { 12.45cm } { 23.20cm } { 1.05cm }
-          \seu_cover_draw_horizontal_rule:nnn { 13.94cm } { 23.20cm } { 1.26cm }
-          \seu_cover_draw_horizontal_rule:nnn { 15.63cm } { 23.20cm } { 1.25cm }
-          \seu_statement_draw_rule_value:nnn { 12.975cm } { 23.31cm }
-            {{\songti\fontsize{12pt}{12pt}\selectfont \tl_use:N \l_seu_date_year_tl}}
-          \seu_statement_draw_rule_value:nnn { 14.57cm } { 23.31cm }
-            {{\songti\fontsize{12pt}{12pt}\selectfont \tl_use:N \l_seu_date_month_tl}}
-          \seu_statement_draw_rule_value:nnn { 16.255cm } { 23.31cm }
-            {{\songti\fontsize{12pt}{12pt}\selectfont \tl_use:N \l_seu_date_day_tl}}
-          \seu_statement_draw_text:nnn { 13.65cm } { 22.71cm } {{\songti\fontsize{12pt}{12pt}\selectfont 年}}
-          \seu_statement_draw_text:nnn { 15.33cm } { 22.71cm } {{\songti\fontsize{12pt}{12pt}\selectfont 月}}
-          \seu_statement_draw_text:nnn { 17.01cm } { 22.71cm } {{\songti\fontsize{12pt}{12pt}\selectfont 日}}
+          \seu_statement_draw_text:nnn { 12.45cm } { 22.71cm }
+            {{\songti\fontsize{12pt}{12pt}\selectfont
+              \seu_statement_date_triplet:nnnnnn
+                { 1.47cm } { \tl_use:N \l_seu_date_year_tl }
+                { 1.05cm } { \tl_use:N \l_seu_date_month_tl }
+                { 1.05cm } { \tl_use:N \l_seu_date_day_tl }}}
         }
         {
           \tl_if_blank:VF \g_seu_authorization_supervisor_date_tl
             { \seu_date_invalid:V \g_seu_authorization_supervisor_date_tl }
-          \seu_cover_draw_horizontal_rule:nnn { 12.45cm } { 23.20cm } { 1.05cm }
-          \seu_cover_draw_horizontal_rule:nnn { 13.94cm } { 23.20cm } { 1.26cm }
-          \seu_cover_draw_horizontal_rule:nnn { 15.63cm } { 23.20cm } { 1.25cm }
-          \seu_statement_draw_text:nnn { 13.65cm } { 22.71cm } {{\songti\fontsize{12pt}{12pt}\selectfont 年}}
-          \seu_statement_draw_text:nnn { 15.33cm } { 22.71cm } {{\songti\fontsize{12pt}{12pt}\selectfont 月}}
-          \seu_statement_draw_text:nnn { 17.01cm } { 22.71cm } {{\songti\fontsize{12pt}{12pt}\selectfont 日}}
+          \seu_statement_draw_text:nnn { 12.45cm } { 22.71cm }
+            {{\songti\fontsize{12pt}{12pt}\selectfont
+              \seu_statement_date_triplet:nnnnnn
+                { 1.47cm } { }
+                { 1.05cm } { }
+                { 1.05cm } { }}}
         }
     \end{tikzpicture}
     \null
