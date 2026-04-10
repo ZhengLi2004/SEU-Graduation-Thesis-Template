@@ -88,15 +88,21 @@
 \seq_new:N \g_seu_keywords_en_seq
 \seq_new:N \g_seu_ai_items_seq
 \seq_new:N \g_seu_ai_text_items_seq
+\seq_new:N \l_seu_date_parts_seq
 
 \tl_new:N \l_seu_ai_tool_tl
 \tl_new:N \l_seu_ai_version_tl
 \tl_new:N \l_seu_ai_scope_tl
 \tl_new:N \l_seu_ai_process_tl
 \tl_new:N \l_seu_ai_pages_tl
+\tl_new:N \l_seu_date_normalized_tl
+\tl_new:N \l_seu_date_year_tl
+\tl_new:N \l_seu_date_month_tl
+\tl_new:N \l_seu_date_day_tl
 \bool_new:N \l_seu_ai_scope_text_bool
 \bool_new:N \l_seu_ai_scope_data_bool
 \bool_new:N \l_seu_ai_scope_other_bool
+\bool_new:N \l_seu_date_parse_success_bool
 
 \tl_gset:Nn \g_seu_image_path_tl { imgs/ }
 \tl_gset:Nn \g_seu_logo_image_tl { logo.png }
@@ -395,8 +401,77 @@
     \underline{\makebox[0.95cm][c]{\strut}}日
   }
 
+\msg_new:nnn { seuthesis } { invalid-date }
+  { Invalid~date~'#1'.~Use~a~numeric~date~like~2026-4-10. }
+
+\cs_new_protected:Npn \seu_date_parse:n #1
+  {
+    \bool_set_false:N \l_seu_date_parse_success_bool
+    \tl_clear:N \l_seu_date_year_tl
+    \tl_clear:N \l_seu_date_month_tl
+    \tl_clear:N \l_seu_date_day_tl
+    \tl_set:Nn \l_seu_date_normalized_tl {#1}
+    \tl_trim_spaces:N \l_seu_date_normalized_tl
+    \tl_if_blank:VTF \l_seu_date_normalized_tl
+      { }
+      {
+        \tl_replace_all:Nnn \l_seu_date_normalized_tl { / } { - }
+        \tl_replace_all:Nnn \l_seu_date_normalized_tl { . } { - }
+        \tl_replace_all:Nnn \l_seu_date_normalized_tl { 年 } { - }
+        \tl_replace_all:Nnn \l_seu_date_normalized_tl { 月 } { - }
+        \tl_replace_all:Nnn \l_seu_date_normalized_tl { 日 } { }
+        \tl_remove_all:Nn \l_seu_date_normalized_tl { \c_space_tl }
+        \seq_set_split:NnV \l_seu_date_parts_seq { - } \l_seu_date_normalized_tl
+        \seq_clear:N \l_tmpa_seq
+        \seq_map_inline:Nn \l_seu_date_parts_seq
+          {
+            \tl_if_blank:nF {##1}
+              { \seq_put_right:Nn \l_tmpa_seq {##1} }
+          }
+        \seq_set_eq:NN \l_seu_date_parts_seq \l_tmpa_seq
+        \int_compare:nNnT { \seq_count:N \l_seu_date_parts_seq } = { 3 }
+          {
+            \tl_set:Nx \l_seu_date_year_tl  { \seq_item:Nn \l_seu_date_parts_seq { 1 } }
+            \tl_set:Nx \l_seu_date_month_tl { \seq_item:Nn \l_seu_date_parts_seq { 2 } }
+            \tl_set:Nx \l_seu_date_day_tl   { \seq_item:Nn \l_seu_date_parts_seq { 3 } }
+            \bool_set_true:N \l_seu_date_parse_success_bool
+          }
+      }
+  }
+
+\cs_new_protected:Npn \seu_date_invalid:V #1
+  { \msg_error:nnx { seuthesis } { invalid-date } { \tl_use:N #1 } }
+
+\cs_new:Npn \seu_date_compose_zh:
+  {
+    \tl_use:N \l_seu_date_year_tl \c_space_tl 年 \c_space_tl
+    \tl_use:N \l_seu_date_month_tl \c_space_tl 月 \c_space_tl
+    \tl_use:N \l_seu_date_day_tl \c_space_tl 日
+  }
+
+\cs_new:Npn \seu_statement_date_segmented:nnn #1#2#3
+  {
+    \underline{\makebox[1.05cm][c]{\strut #1}}年\hspace{0.28em}
+    \underline{\makebox[0.95cm][c]{\strut #2}}月\hspace{0.28em}
+    \underline{\makebox[0.95cm][c]{\strut #3}}日
+  }
+
 \cs_new:Npn \seu_display_or_statement_date:N #1
-  { \tl_if_blank:VTF #1 { \seu_statement_date_placeholder: } { \tl_use:N #1 } }
+  {
+    \tl_if_blank:VTF #1
+      { \seu_statement_date_placeholder: }
+      {
+        \seu_date_parse:n { \tl_use:N #1 }
+        \bool_if:NTF \l_seu_date_parse_success_bool
+          {
+            \seu_statement_date_segmented:nnn
+              { \tl_use:N \l_seu_date_year_tl }
+              { \tl_use:N \l_seu_date_month_tl }
+              { \tl_use:N \l_seu_date_day_tl }
+          }
+          { \tl_use:N #1 }
+      }
+  }
 
 \cs_new:Npn \seu_ai_date_placeholder:
   {
@@ -405,21 +480,50 @@
     \makebox[0.95cm][c]{}日
   }
 
-\cs_new:Npn \seu_display_or_ai_date:N #1
-  { \tl_if_blank:VTF #1 { \seu_ai_date_placeholder: } { \tl_use:N #1 } }
+\cs_new:Npn \seu_ai_date_segmented:nnn #1#2#3
+  {
+    \makebox[1.05cm][c]{\strut #1}年\hspace{0.28em}
+    \makebox[0.95cm][c]{\strut #2}月\hspace{0.28em}
+    \makebox[0.95cm][c]{\strut #3}日
+  }
 
-\cs_new:Npn \seu_ai_date_line:N #1
+\cs_new:Npn \seu_display_or_ai_date:N #1
   {
     \tl_if_blank:VTF #1
-      { 日期：\hspace{1.8em}年\hspace{1.8em}月\hspace{1.8em}日 }
-      { 日期：\tl_use:N #1 }
+      { \seu_ai_date_placeholder: }
+      {
+        \seu_date_parse:n { \tl_use:N #1 }
+        \bool_if:NTF \l_seu_date_parse_success_bool
+          {
+            \seu_ai_date_segmented:nnn
+              { \tl_use:N \l_seu_date_year_tl }
+              { \tl_use:N \l_seu_date_month_tl }
+              { \tl_use:N \l_seu_date_day_tl }
+          }
+          { \tl_use:N #1 }
+      }
   }
+
+\cs_new:Npn \seu_ai_date_line:N #1
+  { 日期：\seu_display_or_ai_date:N #1 }
 
 \cs_new:Npn \seu_ai_signature_space:
   { \makebox[2.85cm][c]{} }
 
-\cs_new:Npn \seu_cover_date_display:
-  { \tl_if_blank:VTF \g_seu_cover_date_tl { \seu_date_placeholder: } { \tl_use:N \g_seu_cover_date_tl } }
+\cs_new_protected:Npn \seu_cover_date_display:
+  {
+    \tl_if_blank:VTF \g_seu_cover_date_tl
+      { \seu_date_placeholder: }
+      {
+        \seu_date_parse:n { \tl_use:N \g_seu_cover_date_tl }
+        \bool_if:NTF \l_seu_date_parse_success_bool
+          { \seu_date_compose_zh: }
+          {
+            \seu_date_invalid:V \g_seu_cover_date_tl
+            \seu_date_placeholder:
+          }
+      }
+  }
 
 \cs_new_protected:Npn \seu_cover_draw_horizontal_rule:nnn #1#2#3
   {
@@ -453,12 +557,10 @@
     \node[
       anchor=center,
       inner\c_space_tl sep=0pt,
-      outer\c_space_tl sep=0pt,
-      text\c_space_tl width=7.976cm,
-      align=center
+      outer\c_space_tl sep=0pt
     ]
       at ($(current\c_space_tl page.north\c_space_tl west)+(12.45cm,-#1)$)
-      {{\seucovervaluefont #2}};
+      {{\makebox[7.976cm][c]{\seucovervaluefont #2}}};
   }
 
 \cs_new_protected:Npn \seu_cover_draw_field_row:nnn #1#2#3
@@ -473,6 +575,69 @@
     \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt,outer\c_space_tl sep=0pt]
       at ($(current\c_space_tl page.north\c_space_tl west)+(#1,-#2)$)
       {#3};
+  }
+
+\cs_new_protected:Npn \seu_statement_draw_center_text:nnn #1#2#3
+  {
+    \node[anchor=center,inner\c_space_tl sep=0pt,outer\c_space_tl sep=0pt]
+      at ($(current\c_space_tl page.north\c_space_tl west)+(#1,-#2)$)
+      {#3};
+  }
+
+\cs_new_protected:Npn \seu_statement_draw_rule_value:nnn #1#2#3
+  {
+    \node[
+      anchor=center,
+      inner\c_space_tl xsep=1.2pt,
+      inner\c_space_tl ysep=0.4pt,
+      outer\c_space_tl sep=0pt,
+      fill=white
+    ]
+      at ($(current\c_space_tl page.north\c_space_tl west)+(#1,-#2)$)
+      {#3};
+  }
+
+\cs_new_protected:Npn \seu_ai_draw_date_triplet:Nn #1#2
+  {
+    \tl_if_blank:VTF #1
+      {
+        \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
+          at ($(seuainw)+(451.01pt,-#2)$)
+          {{\seuaibodyfont 年}};
+        \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
+          at ($(seuainw)+(474.65pt,-#2)$)
+          {{\seuaibodyfont 月}};
+        \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
+          at ($(seuainw)+(498.29pt,-#2)$)
+          {{\seuaibodyfont 日}};
+      }
+      {
+        \seu_date_parse:n { \tl_use:N #1 }
+        \bool_if:NTF \l_seu_date_parse_success_bool
+          {
+            \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
+              at ($(seuainw)+(451.01pt,-#2)$)
+              {{\seuaibodyfont \tl_use:N \l_seu_date_year_tl 年}};
+            \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
+              at ($(seuainw)+(474.65pt,-#2)$)
+              {{\seuaibodyfont \tl_use:N \l_seu_date_month_tl 月}};
+            \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
+              at ($(seuainw)+(498.29pt,-#2)$)
+              {{\seuaibodyfont \tl_use:N \l_seu_date_day_tl 日}};
+          }
+          {
+            \seu_date_invalid:V #1
+            \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
+              at ($(seuainw)+(451.01pt,-#2)$)
+              {{\seuaibodyfont 年}};
+            \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
+              at ($(seuainw)+(474.65pt,-#2)$)
+              {{\seuaibodyfont 月}};
+            \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
+              at ($(seuainw)+(498.29pt,-#2)$)
+              {{\seuaibodyfont 日}};
+          }
+      }
   }
 
 \cs_new:Npn \seu_cover_rule_box:nn #1#2
@@ -942,18 +1107,31 @@
       \seu_cover_draw_horizontal_rule:nnn { 7.06cm } { 11.37cm } { 3.38cm }
       \seu_statement_draw_text:nnn { 11.10cm } { 10.96cm }
         {{\songti\fontsize{12pt}{12pt}\selectfont 日期：}};
-      \tl_if_blank:VTF \g_seu_originality_date_tl
+      \seu_date_parse:n { \tl_use:N \g_seu_originality_date_tl }
+      \bool_if:NTF \l_seu_date_parse_success_bool
         {
+          \seu_cover_draw_horizontal_rule:nnn { 12.45cm } { 11.37cm } { 1.47cm }
+          \seu_cover_draw_horizontal_rule:nnn { 14.35cm } { 11.37cm } { 1.05cm }
+          \seu_cover_draw_horizontal_rule:nnn { 15.83cm } { 11.37cm } { 1.05cm }
+          \seu_statement_draw_rule_value:nnn { 13.185cm } { 11.48cm }
+            {{\songti\fontsize{12pt}{12pt}\selectfont \tl_use:N \l_seu_date_year_tl}}
+          \seu_statement_draw_rule_value:nnn { 14.875cm } { 11.48cm }
+            {{\songti\fontsize{12pt}{12pt}\selectfont \tl_use:N \l_seu_date_month_tl}}
+          \seu_statement_draw_rule_value:nnn { 16.355cm } { 11.48cm }
+            {{\songti\fontsize{12pt}{12pt}\selectfont \tl_use:N \l_seu_date_day_tl}}
+          \seu_statement_draw_text:nnn { 14.02cm } { 10.96cm } {{\songti\fontsize{12pt}{12pt}\selectfont 年}}
+          \seu_statement_draw_text:nnn { 15.49cm } { 10.96cm } {{\songti\fontsize{12pt}{12pt}\selectfont 月}}
+          \seu_statement_draw_text:nnn { 16.96cm } { 10.96cm } {{\songti\fontsize{12pt}{12pt}\selectfont 日}}
+        }
+        {
+          \tl_if_blank:VF \g_seu_originality_date_tl
+            { \seu_date_invalid:V \g_seu_originality_date_tl }
           \seu_cover_draw_horizontal_rule:nnn { 12.45cm } { 11.37cm } { 1.47cm }
           \seu_cover_draw_horizontal_rule:nnn { 14.35cm } { 11.37cm } { 1.05cm }
           \seu_cover_draw_horizontal_rule:nnn { 15.83cm } { 11.37cm } { 1.05cm }
           \seu_statement_draw_text:nnn { 14.02cm } { 10.96cm } {{\songti\fontsize{12pt}{12pt}\selectfont 年}}
           \seu_statement_draw_text:nnn { 15.49cm } { 10.96cm } {{\songti\fontsize{12pt}{12pt}\selectfont 月}}
           \seu_statement_draw_text:nnn { 16.96cm } { 10.96cm } {{\songti\fontsize{12pt}{12pt}\selectfont 日}}
-        }
-        {
-          \seu_statement_draw_text:nnn { 12.45cm } { 10.96cm }
-            {{\songti\fontsize{12pt}{12pt}\selectfont \tl_use:N \g_seu_originality_date_tl}};
         }
 
       \node[anchor=north,inner\c_space_tl sep=0pt]
@@ -978,8 +1156,25 @@
 
       \seu_statement_draw_text:nnn { 3.35cm } { 22.71cm }
         {{\songti\fontsize{12pt}{12pt}\selectfont 日期：}};
-      \tl_if_blank:VTF \g_seu_authorization_author_date_tl
+      \seu_date_parse:n { \tl_use:N \g_seu_authorization_author_date_tl }
+      \bool_if:NTF \l_seu_date_parse_success_bool
         {
+          \seu_cover_draw_horizontal_rule:nnn { 4.62cm } { 23.20cm } { 1.47cm }
+          \seu_cover_draw_horizontal_rule:nnn { 6.53cm } { 23.20cm } { 1.26cm }
+          \seu_cover_draw_horizontal_rule:nnn { 8.22cm } { 23.20cm } { 1.26cm }
+          \seu_statement_draw_rule_value:nnn { 5.355cm } { 23.31cm }
+            {{\songti\fontsize{12pt}{12pt}\selectfont \tl_use:N \l_seu_date_year_tl}}
+          \seu_statement_draw_rule_value:nnn { 7.16cm } { 23.31cm }
+            {{\songti\fontsize{12pt}{12pt}\selectfont \tl_use:N \l_seu_date_month_tl}}
+          \seu_statement_draw_rule_value:nnn { 8.85cm } { 23.31cm }
+            {{\songti\fontsize{12pt}{12pt}\selectfont \tl_use:N \l_seu_date_day_tl}}
+          \seu_statement_draw_text:nnn { 6.20cm } { 22.71cm } {{\songti\fontsize{12pt}{12pt}\selectfont 年}}
+          \seu_statement_draw_text:nnn { 7.92cm } { 22.71cm } {{\songti\fontsize{12pt}{12pt}\selectfont 月}}
+          \seu_statement_draw_text:nnn { 9.60cm } { 22.71cm } {{\songti\fontsize{12pt}{12pt}\selectfont 日}}
+        }
+        {
+          \tl_if_blank:VF \g_seu_authorization_author_date_tl
+            { \seu_date_invalid:V \g_seu_authorization_author_date_tl }
           \seu_cover_draw_horizontal_rule:nnn { 4.62cm } { 23.20cm } { 1.47cm }
           \seu_cover_draw_horizontal_rule:nnn { 6.53cm } { 23.20cm } { 1.26cm }
           \seu_cover_draw_horizontal_rule:nnn { 8.22cm } { 23.20cm } { 1.26cm }
@@ -987,25 +1182,34 @@
           \seu_statement_draw_text:nnn { 7.92cm } { 22.71cm } {{\songti\fontsize{12pt}{12pt}\selectfont 月}}
           \seu_statement_draw_text:nnn { 9.60cm } { 22.71cm } {{\songti\fontsize{12pt}{12pt}\selectfont 日}}
         }
-        {
-          \seu_statement_draw_text:nnn { 4.62cm } { 22.71cm }
-            {{\songti\fontsize{12pt}{12pt}\selectfont \tl_use:N \g_seu_authorization_author_date_tl}};
-        }
 
       \seu_statement_draw_text:nnn { 11.00cm } { 22.71cm }
         {{\songti\fontsize{12pt}{12pt}\selectfont 日期：}};
-      \tl_if_blank:VTF \g_seu_authorization_supervisor_date_tl
+      \seu_date_parse:n { \tl_use:N \g_seu_authorization_supervisor_date_tl }
+      \bool_if:NTF \l_seu_date_parse_success_bool
         {
+          \seu_cover_draw_horizontal_rule:nnn { 12.45cm } { 23.20cm } { 1.05cm }
+          \seu_cover_draw_horizontal_rule:nnn { 13.94cm } { 23.20cm } { 1.26cm }
+          \seu_cover_draw_horizontal_rule:nnn { 15.63cm } { 23.20cm } { 1.25cm }
+          \seu_statement_draw_rule_value:nnn { 12.975cm } { 23.31cm }
+            {{\songti\fontsize{12pt}{12pt}\selectfont \tl_use:N \l_seu_date_year_tl}}
+          \seu_statement_draw_rule_value:nnn { 14.57cm } { 23.31cm }
+            {{\songti\fontsize{12pt}{12pt}\selectfont \tl_use:N \l_seu_date_month_tl}}
+          \seu_statement_draw_rule_value:nnn { 16.255cm } { 23.31cm }
+            {{\songti\fontsize{12pt}{12pt}\selectfont \tl_use:N \l_seu_date_day_tl}}
+          \seu_statement_draw_text:nnn { 13.65cm } { 22.71cm } {{\songti\fontsize{12pt}{12pt}\selectfont 年}}
+          \seu_statement_draw_text:nnn { 15.33cm } { 22.71cm } {{\songti\fontsize{12pt}{12pt}\selectfont 月}}
+          \seu_statement_draw_text:nnn { 17.01cm } { 22.71cm } {{\songti\fontsize{12pt}{12pt}\selectfont 日}}
+        }
+        {
+          \tl_if_blank:VF \g_seu_authorization_supervisor_date_tl
+            { \seu_date_invalid:V \g_seu_authorization_supervisor_date_tl }
           \seu_cover_draw_horizontal_rule:nnn { 12.45cm } { 23.20cm } { 1.05cm }
           \seu_cover_draw_horizontal_rule:nnn { 13.94cm } { 23.20cm } { 1.26cm }
           \seu_cover_draw_horizontal_rule:nnn { 15.63cm } { 23.20cm } { 1.25cm }
           \seu_statement_draw_text:nnn { 13.65cm } { 22.71cm } {{\songti\fontsize{12pt}{12pt}\selectfont 年}}
           \seu_statement_draw_text:nnn { 15.33cm } { 22.71cm } {{\songti\fontsize{12pt}{12pt}\selectfont 月}}
           \seu_statement_draw_text:nnn { 17.01cm } { 22.71cm } {{\songti\fontsize{12pt}{12pt}\selectfont 日}}
-        }
-        {
-          \seu_statement_draw_text:nnn { 12.45cm } { 22.71cm }
-            {{\songti\fontsize{12pt}{12pt}\selectfont \tl_use:N \g_seu_authorization_supervisor_date_tl}};
         }
     \end{tikzpicture}
     \null
@@ -1070,40 +1274,69 @@
       \draw ($(seuainw)+(89.10pt,-152.46pt)$) -- ($(seuainw)+(520.02pt,-152.46pt)$);
       \draw ($(seuainw)+(89.10pt,-177.66pt)$) -- ($(seuainw)+(520.02pt,-177.66pt)$);
       \draw ($(seuainw)+(89.10pt,-225.18pt)$) -- ($(seuainw)+(520.02pt,-225.18pt)$);
-      \draw ($(seuainw)+(89.10pt,-250.38pt)$) -- ($(seuainw)+(520.02pt,-250.38pt)$);
-      \draw ($(seuainw)+(89.10pt,-351.18pt)$) -- ($(seuainw)+(520.02pt,-351.18pt)$);
-      \draw ($(seuainw)+(89.10pt,-408.42pt)$) -- ($(seuainw)+(520.02pt,-408.42pt)$);
-      \draw ($(seuainw)+(89.10pt,-585.54pt)$) -- ($(seuainw)+(520.02pt,-585.54pt)$);
-      \draw ($(seuainw)+(89.10pt,-690.30pt)$) -- ($(seuainw)+(520.02pt,-690.30pt)$);
-
-      \draw ($(seuainw)+(89.10pt,-126.90pt)$) -- ($(seuainw)+(89.10pt,-690.30pt)$);
-      \draw ($(seuainw)+(174.78pt,-126.90pt)$) -- ($(seuainw)+(174.78pt,-351.18pt)$);
-      \draw ($(seuainw)+(174.78pt,-408.42pt)$) -- ($(seuainw)+(174.78pt,-690.30pt)$);
-      \draw ($(seuainw)+(289.10pt,-152.46pt)$) -- ($(seuainw)+(289.10pt,-177.66pt)$);
-      \draw ($(seuainw)+(289.10pt,-225.18pt)$) -- ($(seuainw)+(289.10pt,-351.18pt)$);
-      \draw ($(seuainw)+(384.93pt,-152.46pt)$) -- ($(seuainw)+(384.93pt,-177.66pt)$);
-      \draw ($(seuainw)+(427.86pt,-225.18pt)$) -- ($(seuainw)+(427.86pt,-351.18pt)$);
-      \draw ($(seuainw)+(520.02pt,-126.90pt)$) -- ($(seuainw)+(520.02pt,-690.30pt)$);
+      \str_if_eq:eeF { \tl_use:N \g_seu_ai_used_tl } { no }
+        { \draw ($(seuainw)+(89.10pt,-250.38pt)$) -- ($(seuainw)+(520.02pt,-250.38pt)$); }
+      \str_if_eq:eeTF { \tl_use:N \g_seu_ai_used_tl } { unset }
+        {
+          \draw ($(seuainw)+(89.10pt,-351.18pt)$) -- ($(seuainw)+(520.02pt,-351.18pt)$);
+          \draw ($(seuainw)+(89.10pt,-408.42pt)$) -- ($(seuainw)+(520.02pt,-408.42pt)$);
+          \draw ($(seuainw)+(89.10pt,-585.54pt)$) -- ($(seuainw)+(520.02pt,-585.54pt)$);
+          \draw ($(seuainw)+(89.10pt,-690.30pt)$) -- ($(seuainw)+(520.02pt,-690.30pt)$);
+          \draw ($(seuainw)+(89.10pt,-126.90pt)$) -- ($(seuainw)+(89.10pt,-690.30pt)$);
+          \draw ($(seuainw)+(174.78pt,-126.90pt)$) -- ($(seuainw)+(174.78pt,-351.18pt)$);
+          \draw ($(seuainw)+(174.78pt,-408.42pt)$) -- ($(seuainw)+(174.78pt,-690.30pt)$);
+          \draw ($(seuainw)+(289.10pt,-152.46pt)$) -- ($(seuainw)+(289.10pt,-177.66pt)$);
+          \draw ($(seuainw)+(289.10pt,-225.18pt)$) -- ($(seuainw)+(289.10pt,-351.18pt)$);
+          \draw ($(seuainw)+(384.93pt,-152.46pt)$) -- ($(seuainw)+(384.93pt,-177.66pt)$);
+          \draw ($(seuainw)+(427.86pt,-225.18pt)$) -- ($(seuainw)+(427.86pt,-351.18pt)$);
+          \draw ($(seuainw)+(520.02pt,-126.90pt)$) -- ($(seuainw)+(520.02pt,-690.30pt)$);
+        }
+        {
+          \str_if_eq:eeTF { \tl_use:N \g_seu_ai_used_tl } { yes }
+            {
+              \draw ($(seuainw)+(89.10pt,-351.18pt)$) -- ($(seuainw)+(520.02pt,-351.18pt)$);
+              \draw ($(seuainw)+(89.10pt,-528.30pt)$) -- ($(seuainw)+(520.02pt,-528.30pt)$);
+              \draw ($(seuainw)+(89.10pt,-633.06pt)$) -- ($(seuainw)+(520.02pt,-633.06pt)$);
+              \draw ($(seuainw)+(89.10pt,-126.90pt)$) -- ($(seuainw)+(89.10pt,-633.06pt)$);
+              \draw ($(seuainw)+(174.78pt,-126.90pt)$) -- ($(seuainw)+(174.78pt,-633.06pt)$);
+              \draw ($(seuainw)+(289.10pt,-152.46pt)$) -- ($(seuainw)+(289.10pt,-177.66pt)$);
+              \draw ($(seuainw)+(289.10pt,-225.18pt)$) -- ($(seuainw)+(289.10pt,-351.18pt)$);
+              \draw ($(seuainw)+(384.93pt,-152.46pt)$) -- ($(seuainw)+(384.93pt,-177.66pt)$);
+              \draw ($(seuainw)+(427.86pt,-225.18pt)$) -- ($(seuainw)+(427.86pt,-351.18pt)$);
+              \draw ($(seuainw)+(520.02pt,-126.90pt)$) -- ($(seuainw)+(520.02pt,-633.06pt)$);
+            }
+            {
+              \draw ($(seuainw)+(89.10pt,-282.42pt)$) -- ($(seuainw)+(520.02pt,-282.42pt)$);
+              \draw ($(seuainw)+(89.10pt,-459.54pt)$) -- ($(seuainw)+(520.02pt,-459.54pt)$);
+              \draw ($(seuainw)+(89.10pt,-564.30pt)$) -- ($(seuainw)+(520.02pt,-564.30pt)$);
+              \draw ($(seuainw)+(89.10pt,-126.90pt)$) -- ($(seuainw)+(89.10pt,-564.30pt)$);
+              \draw ($(seuainw)+(174.78pt,-126.90pt)$) -- ($(seuainw)+(174.78pt,-225.18pt)$);
+              \draw ($(seuainw)+(174.78pt,-282.42pt)$) -- ($(seuainw)+(174.78pt,-564.30pt)$);
+              \draw ($(seuainw)+(289.10pt,-152.46pt)$) -- ($(seuainw)+(289.10pt,-177.66pt)$);
+              \draw ($(seuainw)+(384.93pt,-152.46pt)$) -- ($(seuainw)+(384.93pt,-177.66pt)$);
+              \draw ($(seuainw)+(520.02pt,-126.90pt)$) -- ($(seuainw)+(520.02pt,-564.30pt)$);
+            }
+        }
 
       \node[anchor=center,inner\c_space_tl sep=0pt,text\c_space_tl width=85.68pt,align=center]
         at ($(seuainw)+(135.60pt,-140.47pt)$)
         {{\seuaiheaderfont 课题名称}};
-      \node[anchor=center,inner\c_space_tl sep=0pt,text\c_space_tl width=345.24pt,align=center]
+      \node[anchor=center,inner\c_space_tl sep=0pt]
         at ($(seuainw)+(347.40pt,-139.68pt)$)
-        {{\seuaibodyfont \seu_ai_subject_display:}};
+        {{\parbox[c]{345.24pt}{\centering \seuaiboldsubjectfont \seu_ai_subject_display:\par}}};
 
       \node[anchor=center,inner\c_space_tl sep=0pt,text\c_space_tl width=85.68pt,align=center]
         at ($(seuainw)+(131.94pt,-165.06pt)$)
         {{\seuaiheaderfont 学\hspace{1.6em}号}};
-      \node[anchor=center,inner\c_space_tl sep=0pt,text\c_space_tl width=111.60pt,align=center]
+      \node[anchor=center,inner\c_space_tl sep=0pt]
         at ($(seuainw)+(230.58pt,-165.06pt)$)
-        {{\seuaiboldvaluefont \seustudentid}};
+        {{\makebox[111.60pt][c]{\seuaiboldvaluefont \seustudentid}}};
       \node[anchor=center,inner\c_space_tl sep=0pt,text\c_space_tl width=98.55pt,align=center]
         at ($(seuainw)+(335.66pt,-165.06pt)$)
         {{\seuaiheaderfont 姓\hspace{1.6em}名}};
-      \node[anchor=center,inner\c_space_tl sep=0pt,text\c_space_tl width=135.09pt,align=center]
+      \node[anchor=center,inner\c_space_tl sep=0pt]
         at ($(seuainw)+(452.48pt,-165.06pt)$)
-        {{\seuaiboldvaluefont \seuauthor}};
+        {{\makebox[135.09pt][c]{\seuaiboldvaluefont \seuauthor}}};
 
       \node[anchor=center,inner\c_space_tl sep=0pt,text\c_space_tl width=72.22pt,align=center]
         at ($(seuainw)+(132.25pt,-201.42pt)$)
@@ -1121,18 +1354,21 @@
         at ($(seuainw)+(413.68pt,-201.42pt)$)
         {{\seuaibodyfont 否}};
 
-      \node[anchor=center,inner\c_space_tl sep=0pt,text\c_space_tl width=85.68pt,align=center]
-        at ($(seuainw)+(131.94pt,-237.78pt)$)
-        {{\seuaiheaderfont 工具、版本号}};
-      \node[anchor=center,inner\c_space_tl sep=0pt,text\c_space_tl width=111.60pt,align=center]
-        at ($(seuainw)+(235.80pt,-238.99pt)$)
-        {{\seuaiheaderfont 使用范围}};
-      \node[anchor=center,inner\c_space_tl sep=0pt,text\c_space_tl width=141.48pt,align=center]
-        at ($(seuainw)+(365.07pt,-238.99pt)$)
-        {{\seuaiheaderfont 使用过程}};
-      \node[anchor=center,inner\c_space_tl sep=0pt,text\c_space_tl width=92.16pt,align=center]
-        at ($(seuainw)+(473.94pt,-237.78pt)$)
-        {{\seuaiheaderfont 章节（页码）}};
+      \str_if_eq:eeF { \tl_use:N \g_seu_ai_used_tl } { no }
+        {
+          \node[anchor=center,inner\c_space_tl sep=0pt,text\c_space_tl width=85.68pt,align=center]
+            at ($(seuainw)+(131.94pt,-237.78pt)$)
+            {{\seuaiheaderfont 工具、版本号}};
+          \node[anchor=center,inner\c_space_tl sep=0pt,text\c_space_tl width=111.60pt,align=center]
+            at ($(seuainw)+(235.80pt,-238.99pt)$)
+            {{\seuaiheaderfont 使用范围}};
+          \node[anchor=center,inner\c_space_tl sep=0pt,text\c_space_tl width=141.48pt,align=center]
+            at ($(seuainw)+(365.07pt,-238.99pt)$)
+            {{\seuaiheaderfont 使用过程}};
+          \node[anchor=center,inner\c_space_tl sep=0pt,text\c_space_tl width=92.16pt,align=center]
+            at ($(seuainw)+(473.94pt,-237.78pt)$)
+            {{\seuaiheaderfont 章节（页码）}};
+        }
 
       \str_if_eq:eeTF { \tl_use:N \g_seu_ai_used_tl } { unset }
         {
@@ -1191,7 +1427,39 @@
           \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
             at ($(seuainw)+(94.82pt,-386.59pt)$)
             {{\seuaibodyfont 所有内容均由本人独立撰写和创作完成，能够确保学术诚信，不存在任何AI生成的内容。}};
+        }
+        {
+          \str_if_eq:eeT { \tl_use:N \g_seu_ai_used_tl } { yes }
+            {
+              \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt,text\c_space_tl width=61.56pt,align=left]
+                at ($(seuainw)+(94.82pt,-276.34pt)$)
+                {{\seuaibodyfont \seu_ai_yes_tool_block:}};
+              \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
+                at ($(seuainw)+(183.20pt,-260.74pt)$)
+                {{\seu_ai_plain_box:nn { 89.00pt } { \seuaibodylongfont \seu_ai_yes_scope_block: }}};
+              \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
+                at ($(seuainw)+(295.10pt,-272.16pt)$)
+                {{\seu_ai_plain_box:nn { 118.00pt } { \seuaibodylongfont \seu_ai_yes_process_block: }}};
+              \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt,text\c_space_tl width=81.99pt,align=left]
+                at ($(seuainw)+(433.39pt,-287.76pt)$)
+                {{\seuaibodyfont \seu_ai_yes_pages_block:}};
+            }
+          \str_if_eq:eeT { \tl_use:N \g_seu_ai_used_tl } { no }
+            {
+              \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
+                at ($(seuainw)+(94.08pt,-211.48pt)$)
+                {{\seuaibodyfont \seu_highlight_label:n { 选择否： }}};
+              \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
+                at ($(seuainw)+(94.82pt,-230.80pt)$)
+                {{\seuaibodyfont 在本人毕业论文（设计）的撰写过程中，未使用任何生成式人工智能辅助工具。}};
+              \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
+                at ($(seuainw)+(94.82pt,-246.08pt)$)
+                {{\seuaibodyfont 所有内容均由本人独立撰写和创作完成，能够确保学术诚信，不存在任何AI生成的内容。}};
+            }
+        };
 
+      \str_if_eq:eeTF { \tl_use:N \g_seu_ai_used_tl } { unset }
+        {
           \node[anchor=center,inner\c_space_tl sep=0pt,text\c_space_tl width=72.22pt,align=center]
             at ($(seuainw)+(131.21pt,-499.06pt)$)
             {{\seuaiheaderfont 学生诚信申明}};
@@ -1210,15 +1478,7 @@
           \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
             at ($(seuainw)+(391.76pt,-521.21pt)$)
             {{\seuaibodyfont 学生签名：}};
-          \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
-            at ($(seuainw)+(451.01pt,-547.52pt)$)
-            {{\seuaibodyfont 年}};
-          \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
-            at ($(seuainw)+(474.65pt,-547.52pt)$)
-            {{\seuaibodyfont 月}};
-          \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
-            at ($(seuainw)+(498.29pt,-547.52pt)$)
-            {{\seuaibodyfont 日}};
+          \seu_ai_draw_date_triplet:Nn \g_seu_ai_student_date_tl { 547.52pt }
 
           \node[anchor=center,inner\c_space_tl sep=0pt,text\c_space_tl width=78.24pt,align=center]
             at ($(seuainw)+(133.59pt,-640.55pt)$)
@@ -1229,59 +1489,90 @@
           \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
             at ($(seuainw)+(391.76pt,-644.46pt)$)
             {{\seuaibodyfont 指导教师签名：}};
-          \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
-            at ($(seuainw)+(451.01pt,-671.04pt)$)
-            {{\seuaibodyfont 年}};
-          \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
-            at ($(seuainw)+(474.65pt,-671.04pt)$)
-            {{\seuaibodyfont 月}};
-          \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
-            at ($(seuainw)+(498.29pt,-671.04pt)$)
-            {{\seuaibodyfont 日}};
+          \seu_ai_draw_date_triplet:Nn \g_seu_ai_teacher_date_tl { 671.04pt }
         }
         {
-          \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt,text\c_space_tl width=61.56pt,align=left]
-            at ($(seuainw)+(94.82pt,-276.34pt)$)
-            {{\seuaibodyfont \seu_ai_yes_tool_block:}};
-          \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
-            at ($(seuainw)+(183.20pt,-260.74pt)$)
-            {{\seu_ai_plain_box:nn { 89.00pt } { \seuaibodylongfont \seu_ai_yes_scope_block: }}};
-          \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
-            at ($(seuainw)+(295.10pt,-272.16pt)$)
-            {{\seu_ai_plain_box:nn { 118.00pt } { \seuaibodylongfont \seu_ai_yes_process_block: }}};
-          \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt,text\c_space_tl width=81.99pt,align=left]
-            at ($(seuainw)+(433.39pt,-287.76pt)$)
-            {{\seuaibodyfont \seu_ai_yes_pages_block:}};
+          \str_if_eq:eeTF { \tl_use:N \g_seu_ai_used_tl } { yes }
+            {
+              \node[anchor=center,inner\c_space_tl sep=0pt,text\c_space_tl width=72.22pt,align=center]
+                at ($(seuainw)+(131.21pt,-441.82pt)$)
+                {{\seuaiheaderfont 学生诚信申明}};
+              \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
+                at ($(seuainw)+(200.01pt,-357.07pt)$)
+                {{\seuaibodylongfont 本人郑重声明，上述关于生成式人工智能使用情况的陈述真实无误，}};
+              \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
+                at ($(seuainw)+(178.92pt,-375.24pt)$)
+                {{\seuaibodylongfont 已对使用此类技术的所有细节进行了全面且诚实的报告。本人深知学术诚}};
+              \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
+                at ($(seuainw)+(178.92pt,-393.47pt)$)
+                {{\seuaibodylongfont 信的重要性，如有任何隐瞒或虚假之处，愿承担学术不端行为带来的相关}};
+              \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
+                at ($(seuainw)+(178.92pt,-411.57pt)$)
+                {{\seuaibodylongfont 惩处。}};
+              \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
+                at ($(seuainw)+(391.76pt,-463.97pt)$)
+                {{\seuaibodyfont 学生签名：}};
+              \seu_ai_draw_date_triplet:Nn \g_seu_ai_student_date_tl { 490.28pt }
 
-          \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
-            at ($(seuainw)+(100.20pt,-353.88pt)$)
-            {{\seu_ai_plain_box:nn { 400.00pt } { \seuaibodylongfont \seu_ai_no_block: }}};
+              \node[anchor=center,inner\c_space_tl sep=0pt,text\c_space_tl width=78.24pt,align=center]
+                at ($(seuainw)+(133.59pt,-583.31pt)$)
+                {{\seuaiheaderfont 指导教师意见}};
+              \tl_if_blank:VTF \g_seu_ai_teacher_comment_tl
+                {
+                  \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
+                    at ($(seuainw)+(180.92pt,-534.91pt)$)
+                    {{\seuaibodylongfont 意见：}};
+                }
+                {
+                  \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
+                    at ($(seuainw)+(180.92pt,-534.91pt)$)
+                    {{\seu_ai_plain_box:nn { 314.00pt } { \seuaibodylongfont \seu_ai_teacher_statement_block: }}};
+                }
+              \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
+                at ($(seuainw)+(391.76pt,-587.22pt)$)
+                {{\seuaibodyfont 指导教师签名：}};
+              \seu_ai_draw_date_triplet:Nn \g_seu_ai_teacher_date_tl { 613.80pt }
+            }
+            {
+              \node[anchor=center,inner\c_space_tl sep=0pt,text\c_space_tl width=72.22pt,align=center]
+                at ($(seuainw)+(131.21pt,-373.06pt)$)
+                {{\seuaiheaderfont 学生诚信申明}};
+              \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
+                at ($(seuainw)+(200.01pt,-288.31pt)$)
+                {{\seuaibodylongfont 本人郑重声明，上述关于生成式人工智能使用情况的陈述真实无误，}};
+              \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
+                at ($(seuainw)+(178.92pt,-306.48pt)$)
+                {{\seuaibodylongfont 已对使用此类技术的所有细节进行了全面且诚实的报告。本人深知学术诚}};
+              \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
+                at ($(seuainw)+(178.92pt,-324.71pt)$)
+                {{\seuaibodylongfont 信的重要性，如有任何隐瞒或虚假之处，愿承担学术不端行为带来的相关}};
+              \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
+                at ($(seuainw)+(178.92pt,-342.81pt)$)
+                {{\seuaibodylongfont 惩处。}};
+              \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
+                at ($(seuainw)+(391.76pt,-395.21pt)$)
+                {{\seuaibodyfont 学生签名：}};
+              \seu_ai_draw_date_triplet:Nn \g_seu_ai_student_date_tl { 421.52pt }
 
-          \node[anchor=center,inner\c_space_tl sep=0pt,text\c_space_tl width=72.22pt,align=center]
-            at ($(seuainw)+(131.94pt,-496.98pt)$)
-            {{\seuaiheaderfont 学生诚信申明}};
-          \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
-            at ($(seuainw)+(185.30pt,-412.66pt)$)
-            {{\seu_ai_plain_box:nn { 314.00pt } { \seuaibodylongfont \seu_ai_student_statement_block: }}};
-          \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
-            at ($(seuainw)+(390.55pt,-510.00pt)$)
-            {{\seuaibodyfont 学生签名：}};
-          \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
-            at ($(seuainw)+(404.80pt,-527.40pt)$)
-            {{\seuaibodyfont \seu_ai_date_line:N \g_seu_ai_student_date_tl}};
-
-          \node[anchor=center,inner\c_space_tl sep=0pt,text\c_space_tl width=78.24pt,align=center]
-            at ($(seuainw)+(131.94pt,-637.92pt)$)
-            {{\seuaiheaderfont 指导教师意见}};
-          \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
-            at ($(seuainw)+(185.30pt,-589.46pt)$)
-            {{\seu_ai_plain_box:nn { 314.00pt } { \seuaibodylongfont \seu_ai_teacher_statement_block: }}};
-          \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
-            at ($(seuainw)+(390.55pt,-633.00pt)$)
-            {{\seuaibodyfont 指导教师签名：}};
-          \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
-            at ($(seuainw)+(404.80pt,-650.40pt)$)
-            {{\seuaibodyfont \seu_ai_date_line:N \g_seu_ai_teacher_date_tl}};
+              \node[anchor=center,inner\c_space_tl sep=0pt,text\c_space_tl width=78.24pt,align=center]
+                at ($(seuainw)+(133.59pt,-514.55pt)$)
+                {{\seuaiheaderfont 指导教师意见}};
+              \tl_if_blank:VTF \g_seu_ai_teacher_comment_tl
+                {
+                  \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
+                    at ($(seuainw)+(180.92pt,-466.15pt)$)
+                    {{\seuaibodylongfont 意见：}};
+                }
+                {
+                  \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
+                    at ($(seuainw)+(180.92pt,-466.15pt)$)
+                    {{\seu_ai_plain_box:nn { 314.00pt } { \seuaibodylongfont \seu_ai_teacher_statement_block: }}};
+                }
+              \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
+                at ($(seuainw)+(391.76pt,-518.46pt)$)
+                {{\seuaibodyfont 指导教师签名：}};
+              \seu_ai_draw_date_triplet:Nn \g_seu_ai_teacher_date_tl { 545.04pt }
+            }
         };
     \end{tikzpicture}
     \null
@@ -1457,7 +1748,8 @@
 \newcommand{\seuaiheaderfont}{\seuboldheiti\fontsize{12pt}{12pt}\selectfont}
 \newcommand{\seuaibodyfont}{\songti\fontsize{10.5pt}{12pt}\selectfont}
 \newcommand{\seuaibodylongfont}{\songti\fontsize{10.5pt}{13.9pt}\selectfont}
-\newcommand{\seuaiboldvaluefont}{\CJKfamily{seucovershmedium}\fontsize{12pt}{12pt}\selectfont}
+\newcommand{\seuaiboldvaluefont}{\seuboldheiti\fontsize{12pt}{12pt}\selectfont}
+\newcommand{\seuaiboldsubjectfont}{\seuboldheiti\fontsize{10.5pt}{12pt}\selectfont}
 \newcommand{\seumainheadertext}{\songti\seuxiaowu 东南大学本科毕业设计（论文）}
 \newcommand{\seumainheadercontent}{%
   \makebox[\headwidth][c]{%
