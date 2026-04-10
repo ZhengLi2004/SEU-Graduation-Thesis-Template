@@ -7,13 +7,14 @@
 
 \RequirePackage[
   a4paper,
-  top=2cm,
+  includehead,
+  top=1.65cm,
   bottom=2cm,
   left=2cm,
   right=2cm,
   bindingoffset=0.5cm,
-  headheight=11pt,
-  headsep=0.18cm,
+  headheight=14.6pt,
+  headsep=0.30cm,
   footskip=0.45cm
 ]{geometry}
 \RequirePackage{fancyhdr}
@@ -1374,11 +1375,16 @@
 \newcommand{\seuaibodyfont}{\songti\fontsize{10.5pt}{12pt}\selectfont}
 \newcommand{\seuaibodylongfont}{\songti\fontsize{10.5pt}{13.9pt}\selectfont}
 \newcommand{\seuaiboldvaluefont}{\CJKfamily{seucovershmedium}\fontsize{12pt}{12pt}\selectfont}
-\newcommand{\seumainheaderoverlay}{%
-  \begin{tikzpicture}[remember picture,overlay]
-    \node[anchor=north,inner sep=0pt] at ([yshift=-17.75mm]current page.north) {\songti\seuxiaowu 东南大学本科毕业设计（论文）};
-    \draw[line width=0.55pt] ([xshift=24.0mm,yshift=-23.40mm]current page.north west) -- ([xshift=-19.0mm,yshift=-23.40mm]current page.north east);
-  \end{tikzpicture}%
+\newcommand{\seumainheadertext}{\songti\seuxiaowu 东南大学本科毕业设计（论文）}
+\newcommand{\seumainheadercontent}{%
+  \makebox[\headwidth][c]{%
+    \vbox to \headheight{%
+      \offinterlineskip
+      \vfil
+      \hbox to \headwidth{\hfil \raisebox{-0.9pt}{\seumainheadertext} \hfil}%
+      \vskip 0.2pt%
+    }%
+  }%
 }
 
 \fancypagestyle{seublank}{
@@ -1394,16 +1400,16 @@
 }
 \fancypagestyle{seumain}{
   \fancyhf{}
-  \fancyhead[C]{\seumainheaderoverlay}
+  \fancyhead[C]{\seumainheadercontent}
   \fancyfoot[C]{\songti\seuxiaowu \thepage}
-  \renewcommand{\headrulewidth}{0pt}
+  \renewcommand{\headrulewidth}{0.55pt}
   \renewcommand{\footrulewidth}{0pt}
 }
 \fancypagestyle{plain}{
   \fancyhf{}
-  \fancyhead[C]{\seumainheaderoverlay}
+  \fancyhead[C]{\seumainheadercontent}
   \fancyfoot[C]{\songti\seuxiaowu \thepage}
-  \renewcommand{\headrulewidth}{0pt}
+  \renewcommand{\headrulewidth}{0.55pt}
   \renewcommand{\footrulewidth}{0pt}
 }
 
@@ -1437,6 +1443,16 @@
   \thispagestyle{seumain}
 }
 
+\NewDocumentCommand{\seutextpagebreak}{}{
+  \clearpage
+}
+
+\NewDocumentCommand{\seutoppageparagraph}{+m}{
+  \clearpage
+  \noindent
+  \rule{0pt}{14.6pt}#1\par
+}
+
 \makeatletter
 \NewDocumentCommand{\seumaketableofcontents}{}{
   \clearpage
@@ -1450,55 +1466,21 @@
 }
 \makeatother
 
-\newcommand{\seubibgroup}[1]{%
-  \par\noindent{{\seuboldheiti\seuwuhao #1}\par}
-  \vspace{0.28\baselineskip}%
-}
-
 \NewDocumentCommand{\seuprintbibliography}{}{
   \clearpage
   \begingroup
   \seuwuhao
-  \setlength{\bibitemsep}{0.35\baselineskip}
+  \setlength{\bibitemsep}{0.18\baselineskip}
   \sloppy
-  \printbibliography[heading=seubibliography,keyword=ord1]
-  \printbibliography[heading=none,keyword=ord2]
-  \printbibliography[heading=none,keyword=ord3]
-  \printbibliography[heading=none,keyword=ord4]
-  \seubibgroup{学位论文}
-  \printbibliography[heading=none,keyword=th1]
-  \printbibliography[heading=none,keyword=th2]
-  \seubibgroup{专利}
-  \printbibliography[heading=none,keyword=pa1]
-  \seuomitpatenturltrue
-  \printbibliography[heading=none,keyword=pa2]
-  \seuomitpatenturlfalse
-  \clearpage
-  \noindent Http://FF\&p=1\&u=netahtml/PTO/search-bool.html\&r=5\&f=G\&l=50\&col=AND\&d=PG01\&sl=IBM.AS\par
-  \noindent \&OS=AN/IBM/RS=AN/IBM.\par
-  \vspace{0.40\baselineskip}
-  \seubibgroup{期刊}
-  \printbibliography[heading=none,keyword=jo1]
-  \printbibliography[heading=none,keyword=jo2]
-  \printbibliography[heading=none,keyword=jo3]
-  \seubibgroup{电子资源}
-  \printbibliography[heading=none,keyword=el1]
-  \printbibliography[heading=none,keyword=el2]
+  \printbibliography[heading=seubibliography]
   \endgroup
 }
 
-\defbibheading{seubibliography}{
+\newcommand{\seubibliographyheading}{%
   \chapter*{参考文献}
   \addcontentsline{toc}{chapter}{参考文献}
-  \noindent
-  列出作者直接阅读过或在正文中引用过的文献资料。撰写论文时，需注意引用权威和最新的文献。\par
-  参考文献需在引文右上角用方括号“[]”标明序号，如“基本机构[1]”，并在参考文献中列出。每一条参考文献著录均以“.”结束。参考文献要另起一页，一律放在正文之后，不得放在各章节之后。\par
-  参考文献采用顺序编码制，需符合《信息与文献\ 参考文献著录规则》（GB/T 7714-2015）规范要求，文献类型和标识代码为：普通图书[M]、会议录[C]、汇编[G]、报纸[N]、期刊[J]、学位论文[D]、报告[R]、标准[S]、专利[P]、计算机程序[CP]、电子公告[EB]、档案[A]、舆图[CM]、数据集[DS]、其他[Z]。\par
-  参考文献中主要责任者的个人作者采用姓在前名在后的著录形式，当作者不超过 3 个时，全部照录。超过 3 个，著录的前 3 个作者其后加“，等”（et al.）。欧美著者的名可用缩写字母，缩写名后省略缩写点，姓和缩写名全大写。用汉语拼音书写的人名，姓全大写，名可缩写，取每个汉字拼音的首字母。\par
-  参考文献为五号宋体，英文及数字为五号 Times New Roman 字体，两端对齐。参考文献中的标点符号均为英文标点，常用的参考文献著录项目和格式示例如下：\par
-  \vspace{24pt}
-  \seubibgroup{普通图书}
 }
+\defbibheading{seubibliography}{\seubibliographyheading}
 \renewcommand*{\bibfont}{\songti\seuwuhao}
 
 \ctexset{
@@ -1506,7 +1488,7 @@
     name = {第,章},
     number = \chinese{chapter},
     aftername = \enspace,
-    beforeskip = -8pt,
+    beforeskip = -20pt,
     afterskip = 6pt,
     format = \centering\seuboldheiti\seusanhao
   },
@@ -1577,7 +1559,7 @@
       name = {附录,},%
       number = \Alph{chapter},%
       aftername = \space,%
-      beforeskip = -8pt,%
+      beforeskip = -21pt,%
       afterskip = 4pt,%
       format = \centering\seuboldheiti\seusanhao%
     }%
@@ -1603,7 +1585,7 @@
           {\seuorigchapter[#2]{#3}}
           {\seuorigchapter{#3}}
         \ifseuappendixmode
-          \vspace{8pt}%
+          \vspace{1pt}%
         \else
           \vspace{-4pt}%
         \fi
@@ -1623,11 +1605,3 @@
   \hb@xt@ 1.8em{\hss\@makefnmark}#1%
 }
 \makeatother
-
-\newif\ifseuomitpatenturl
-\seuomitpatenturlfalse
-\AtEveryBibitem{%
-  \ifseuomitpatenturl
-    \ifkeyword{pa2}{\clearfield{url}}{}%
-  \fi
-}
