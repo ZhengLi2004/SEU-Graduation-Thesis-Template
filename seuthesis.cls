@@ -865,8 +865,31 @@
 \cs_new:Npn \seu_display_or_date_placeholder:N #1
   { \tl_if_blank:VTF #1 { \seu_date_placeholder: } { \tl_use:N #1 } }
 
+\cs_new_protected:Npn \seu_checkbox_checked:
+  {
+    \hbox_set:Nn \l_tmpa_box { $\square$ }
+    \makebox[\dim_eval:n { \box_wd:N \l_tmpa_box }][c]
+      {
+        \rlap
+          {
+            \makebox[\dim_eval:n { \box_wd:N \l_tmpa_box }][c]
+              {
+                \raisebox{-0.01ex}[0pt][0pt]
+                  {
+                    \smash
+                      {
+                        \hspace*{0.06em}
+                        \scalebox{1.10}[1.10]{$\pmb{\checkmark}$}
+                      }
+                  }
+              }
+          }
+        $\square$
+      }
+  }
+
 \cs_new:Npn \seu_checkbox:nn #1#2
-  { \tl_if_eq:nnTF {#1} {#2} { \ensuremath{\blacksquare} } { \ensuremath{\square} } }
+  { \tl_if_eq:nnTF {#1} {#2} { \seu_checkbox_checked: } { \ensuremath{\square} } }
 
 \cs_new:Npn \seu_yes_box:
   { \exp_args:NV \seu_checkbox:nn \g_seu_ai_used_tl { yes } }
@@ -1003,9 +1026,13 @@
     \str_if_eq:eeTF { \tl_use:N \g_seu_ai_used_tl } { no }
       { }
       {
-        \seu_ai_scope_box:N \l_seu_ai_scope_text_bool ~文本生成及内容修改\par
-        \seu_ai_scope_box:N \l_seu_ai_scope_data_bool ~数据、图表分析、代码调试\par
-        \seu_ai_scope_box:N \l_seu_ai_scope_other_bool ~其他：请具体说明
+        {
+          \xeCJKsetup { CJKglue = { \hskip 0pt } }
+          \hsize=\dimexpr\hsize + 4.80pt\relax
+          \seu_ai_scope_box:N \l_seu_ai_scope_text_bool 文本生成及内容修改\par
+        }
+        \seu_ai_scope_box:N \l_seu_ai_scope_data_bool 数据、图表分析、代码调试\par
+        \seu_ai_scope_box:N \l_seu_ai_scope_other_bool 其他：请具体说明
       }
   }
 
@@ -1158,7 +1185,11 @@
   }
 
 \cs_new:Npn \seu_ai_scope_box:N #1
-  { \bool_if:NTF #1 { \ensuremath{\blacksquare} } { \ensuremath{\square} } }
+  {
+    \bool_if:NTF #1 { \seu_checkbox_checked: } { \ensuremath{\square} }
+    \nobreak\hspace{0.33em}
+    \ignorespaces
+  }
 
 \cs_new:Npn \seu_ai_title_cell:nn #1#2
   {
