@@ -39,9 +39,6 @@
 *.thm
 *.xdy
 
-# Generated PDFs
-/main.pdf
-
 # Root-level comparison and debug exports
 /cur*.png
 /current*.png

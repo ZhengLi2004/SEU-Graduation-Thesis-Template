@@ -81,6 +81,8 @@
 \tl_new:N \g_seu_degree_image_tl
 \tl_new:N \g_seu_cover_bg_image_tl
 \tl_new:N \g_seu_motto_image_tl
+\tl_new:N \g_seu_signature_student_image_tl
+\tl_new:N \g_seu_signature_teacher_image_tl
 \tl_new:N \g_seu_ai_tool_display_tl
 \tl_new:N \g_seu_ai_scope_display_tl
 \tl_new:N \g_seu_ai_process_display_tl
@@ -112,6 +114,8 @@
 \tl_gset:Nn \g_seu_degree_image_tl { degree.jpg }
 \tl_gset:Nn \g_seu_cover_bg_image_tl { cover-1.png }
 \tl_gset:Nn \g_seu_motto_image_tl { cover-2.png }
+\tl_gset:Nn \g_seu_signature_student_image_tl { }
+\tl_gset:Nn \g_seu_signature_teacher_image_tl { }
 \tl_gset:Nn \g_seu_ai_used_tl { unset }
 \tl_const:Nn \c_seu_abstract_zh_file_tl { content/abstract_zh.tex }
 \tl_const:Nn \c_seu_abstract_en_file_tl { content/abstract_en.tex }
@@ -137,6 +141,10 @@
     ai_student_date .tl_gset:N = \g_seu_ai_student_date_tl,
     ai_teacher_date .tl_gset:N = \g_seu_ai_teacher_date_tl,
     ai_teacher_comment .tl_gset:N = \g_seu_ai_teacher_comment_tl,
+    signature_student_image .tl_gset:N = \g_seu_signature_student_image_tl,
+    signature_teacher_image .tl_gset:N = \g_seu_signature_teacher_image_tl,
+    signature_image .code:n =
+      { \tl_gset:Nn \g_seu_signature_student_image_tl {#1} },
     ai_used .choice:,
     ai_used / unset .code:n = { \tl_gset:Nn \g_seu_ai_used_tl { unset } },
     ai_used / yes .code:n = { \tl_gset:Nn \g_seu_ai_used_tl { yes } },
@@ -640,6 +648,42 @@
       {#3};
   }
 
+\cs_new:Npn \seu_statement_student_signature_image_width:
+  { 1.55cm }
+
+\cs_new:Npn \seu_statement_teacher_signature_image_width:
+  { 1.55cm }
+
+\cs_new:Npn \seu_ai_student_signature_image_width:
+  { 56.00pt }
+
+\cs_new:Npn \seu_ai_teacher_signature_image_width:
+  { 50.00pt }
+
+\cs_new:Npn \seu_statement_signature_image_raise:
+  { 0.22cm }
+
+\cs_new_protected:Npn \seu_statement_draw_signature_image:Nnnn #1#2#3#4
+  {
+    \tl_if_blank:VF #1
+      {
+        \node[anchor=center,inner\c_space_tl sep=0pt,outer\c_space_tl sep=0pt]
+          at ($(current\c_space_tl page.north\c_space_tl west)
+            +(#2,-\dim_eval:n { #3 - \seu_statement_signature_image_raise: })$)
+          {{\includegraphics[width=#4]{\tl_use:N #1}}};
+      }
+  }
+
+\cs_new_protected:Npn \seu_ai_draw_signature_image:Nnnn #1#2#3#4
+  {
+    \tl_if_blank:VF #1
+      {
+        \node[anchor=center,inner\c_space_tl sep=0pt,outer\c_space_tl sep=0pt]
+          at ($(seuainw)+(#2,-#3)$)
+          {{\includegraphics[width=#4]{\tl_use:N #1}}};
+      }
+  }
+
 \cs_new_protected:Npn \seu_statement_draw_rule_value:nnn #1#2#3
   {
     \node[
@@ -714,6 +758,11 @@
     \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
       at ($(seuainw)+(391.76pt,-\dim_eval:n { 521.21pt + (#1) })$)
       {{\seuaibodyfont 学生签名：}};
+    \seu_ai_draw_signature_image:Nnnn
+      \g_seu_signature_student_image_tl
+      { 479.20pt }
+      { \dim_eval:n { 521.21pt + (#1) } }
+      { \seu_ai_student_signature_image_width: }
     \seu_ai_draw_date_triplet:Nn \g_seu_ai_student_date_tl
       { \dim_eval:n { 547.52pt + (#1) } }
   }
@@ -743,6 +792,11 @@
     \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
       at ($(seuainw)+(391.76pt,-\dim_eval:n { 634.46pt + (#1) - \seu_ai_teacher_signature_raise_dim: })$)
       {{\seuaibodyfont 指导教师签名：}};
+    \seu_ai_draw_signature_image:Nnnn
+      \g_seu_signature_teacher_image_tl
+      { 493.50pt }
+      { \dim_eval:n { 634.46pt + (#1) - \seu_ai_teacher_signature_raise_dim: } }
+      { \seu_ai_teacher_signature_image_width: }
     \seu_ai_draw_date_triplet:Nn \g_seu_ai_teacher_date_tl
       { \dim_eval:n { 661.04pt + (#1) - \seu_ai_teacher_signature_raise_dim: } }
   }
@@ -1291,6 +1345,9 @@
       \seu_statement_draw_text:nnn { 4.19cm } { 10.96cm }
         {{\songti\fontsize{12pt}{12pt}\selectfont 论文作者签名：}};
       \seu_cover_draw_horizontal_rule:nnn { 7.06cm } { 11.45cm } { 3.38cm }
+      \seu_statement_draw_signature_image:Nnnn
+        \g_seu_signature_student_image_tl
+        { 8.75cm } { 11.45cm } { \seu_statement_student_signature_image_width: }
       \seu_statement_draw_text:nnn { 11.10cm } { 10.96cm }
         {{\songti\fontsize{12pt}{12pt}\selectfont 日期：}};
       \seu_date_parse:n { \tl_use:N \g_seu_originality_date_tl }
@@ -1330,9 +1387,15 @@
       \seu_statement_draw_text:nnn { 3.35cm } { 22.10cm }
         {{\songti\fontsize{12pt}{12pt}\selectfont 论文作者签名：}};
       \seu_cover_draw_horizontal_rule:nnn { 6.31cm } { 22.50cm } { 4.02cm }
+      \seu_statement_draw_signature_image:Nnnn
+        \g_seu_signature_student_image_tl
+        { 8.32cm } { 22.50cm } { \seu_statement_student_signature_image_width: }
       \seu_statement_draw_text:nnn { 11.00cm } { 22.10cm }
         {{\songti\fontsize{12pt}{12pt}\selectfont 导师签名：}};
       \seu_cover_draw_horizontal_rule:nnn { 13.30cm } { 22.50cm } { 4.86cm }
+      \seu_statement_draw_signature_image:Nnnn
+        \g_seu_signature_teacher_image_tl
+        { 15.73cm } { 22.50cm } { \seu_statement_teacher_signature_image_width: }
 
       \seu_statement_draw_text:nnn { 3.35cm } { 22.71cm }
         {{\songti\fontsize{12pt}{12pt}\selectfont 日期：}};
