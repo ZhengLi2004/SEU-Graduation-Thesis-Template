@@ -93,6 +93,8 @@
 
 \tl_new:N \l_seu_ai_tool_tl
 \tl_new:N \l_seu_ai_version_tl
+\tl_new:N \l_seu_ai_tool_version_tl
+\tl_new:N \l_seu_ai_tool_entry_tl
 \tl_new:N \l_seu_ai_scope_tl
 \tl_new:N \l_seu_ai_process_tl
 \tl_new:N \l_seu_ai_pages_tl
@@ -146,6 +148,7 @@
   {
     tool .tl_set:N = \l_seu_ai_tool_tl,
     version .tl_set:N = \l_seu_ai_version_tl,
+    tool_version .tl_set:N = \l_seu_ai_tool_version_tl,
     scope .tl_set:N = \l_seu_ai_scope_tl,
     process .tl_set:N = \l_seu_ai_process_tl,
     pages .tl_set:N = \l_seu_ai_pages_tl,
@@ -715,27 +718,33 @@
       { \dim_eval:n { 547.52pt + (#1) } }
   }
 
+\cs_new:Npn \seu_ai_teacher_raise_dim:
+  { 16.00pt }
+
+\cs_new:Npn \seu_ai_teacher_signature_raise_dim:
+  { 8.00pt }
+
 \cs_new_protected:Npn \seu_ai_draw_teacher_statement:n #1
   {
     \node[anchor=center,inner\c_space_tl sep=0pt,text\c_space_tl width=78.24pt,align=center]
-      at ($(seuainw)+(133.59pt,-\dim_eval:n { 640.55pt + (#1) })$)
+      at ($(seuainw)+(133.59pt,-\dim_eval:n { 640.55pt + (#1) - \seu_ai_teacher_raise_dim: })$)
       {{\seuaiheaderfont 指导教师意见}};
     \tl_if_blank:VTF \g_seu_ai_teacher_comment_tl
       {
         \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
-          at ($(seuainw)+(180.92pt,-\dim_eval:n { 592.15pt + (#1) })$)
+          at ($(seuainw)+(180.92pt,-\dim_eval:n { 592.15pt + (#1) - \seu_ai_teacher_raise_dim: })$)
           {{\seuaibodylongfont 意见：}};
       }
       {
         \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
-          at ($(seuainw)+(180.92pt,-\dim_eval:n { 592.15pt + (#1) })$)
-          {{\seu_ai_plain_box:nn { 314.00pt } { \seuaibodylongfont \seu_ai_teacher_statement_block: }}};
+          at ($(seuainw)+(180.92pt,-\dim_eval:n { 592.15pt + (#1) - \seu_ai_teacher_raise_dim: })$)
+          {{\seu_ai_plain_box:nn { 335.00pt } { \seuaibodylongfont \seu_ai_teacher_statement_block: }}};
       }
     \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
-      at ($(seuainw)+(391.76pt,-\dim_eval:n { 634.46pt + (#1) })$)
+      at ($(seuainw)+(391.76pt,-\dim_eval:n { 634.46pt + (#1) - \seu_ai_teacher_signature_raise_dim: })$)
       {{\seuaibodyfont 指导教师签名：}};
     \seu_ai_draw_date_triplet:Nn \g_seu_ai_teacher_date_tl
-      { \dim_eval:n { 661.04pt + (#1) } }
+      { \dim_eval:n { 661.04pt + (#1) - \seu_ai_teacher_signature_raise_dim: } }
   }
 
 \cs_new:Npn \seu_cover_rule_box:nn #1#2
@@ -843,6 +852,17 @@
         \setlength{\parskip}{0pt}
         \RaggedRight
         #2
+      }
+  }
+
+\cs_new:Npn \seu_ai_centered_plain_box:nnn #1#2#3
+  {
+    \parbox[c][#2][c]{#1}
+      {
+        \setlength{\parindent}{0pt}
+        \setlength{\parskip}{0pt}
+        \RaggedRight
+        #3
       }
   }
 
@@ -957,6 +977,37 @@
       }
   }
 
+\cs_set:Npn \seu_ai_yes_tool_block:
+  {
+    \str_if_eq:eeTF { \tl_use:N \g_seu_ai_used_tl } { unset }
+      { \seu_highlight_label:n { 选择是： }\par 示例：\par DeepSeek-V3 }
+      {
+        \str_if_eq:eeTF { \tl_use:N \g_seu_ai_used_tl } { yes }
+          {
+            \tl_if_empty:NTF \g_seu_ai_tool_display_tl
+              { }
+              { \g_seu_ai_tool_display_tl }
+          }
+          { }
+      }
+  }
+
+\cs_new_protected:Npn \seu_ai_draw_yes_blocks:
+  {
+    \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
+      at ($(seuainw)+(94.82pt,-255.74pt)$)
+      {{\seu_ai_centered_plain_box:nnn { 74.00pt } { 90.00pt } { \seuaibodyfont \seu_ai_yes_tool_block: }}};
+    \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
+      at ($(seuainw)+(183.20pt,-260.74pt)$)
+      {{\seu_ai_plain_box:nn { 95.00pt } { \seuaibodylongfont \seu_ai_yes_scope_block: }}};
+    \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
+      at ($(seuainw)+(293.74pt,-255.74pt)$)
+      {{\seu_ai_centered_plain_box:nnn { 126.00pt } { 90.00pt } { \seuaibodyfont \seu_ai_yes_process_block: }}};
+    \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
+      at ($(seuainw)+(434.30pt,-255.74pt)$)
+      {{\seu_ai_centered_plain_box:nnn { 77.00pt } { 90.00pt } { \seuaibodyfont \seu_ai_yes_pages_block: }}};
+  }
+
 \cs_new:Npn \seu_ai_no_block:
   {
     \seu_highlight_label:n { 选择否： }\par
@@ -989,6 +1040,16 @@
         #1
         \tl_if_blank:nF {#2} { -#2 }
       }
+  }
+
+\cs_new_protected:Npn \seu_ai_prepare_tool_entry:
+  {
+    \tl_if_blank:VTF \l_seu_ai_tool_version_tl
+      {
+        \tl_set:Nx \l_seu_ai_tool_entry_tl
+          { \seu_tool_version:nn { \l_seu_ai_tool_tl } { \l_seu_ai_version_tl } }
+      }
+      { \tl_set_eq:NN \l_seu_ai_tool_entry_tl \l_seu_ai_tool_version_tl }
   }
 
 \cs_new_protected:Npn \seu_ai_scope_detect:
@@ -1025,8 +1086,7 @@
 
 \cs_new:Npn \seu_ai_no_statement_text:
   {
-    在本人毕业论文（设计）的撰写过程中，未使用任何生成式人工智能辅助工具。\\
-    所有内容均由本人独立撰写和创作完成，能够确保学术诚信，不存在任何AI生成的内容。
+    在本人毕业论文（设计）的撰写过程中，未使用任何生成式人工智能辅助工具。所有内容均由本人独立撰写和创作完成，能够确保学术诚信，不存在任何AI生成的内容。
   }
 
 \cs_new_protected:Npn \seu_ai_validate_state:
@@ -1389,41 +1449,41 @@
         {
           \draw ($(seuainw)+(89.10pt,-351.18pt)$) -- ($(seuainw)+(520.02pt,-351.18pt)$);
           \draw ($(seuainw)+(89.10pt,-408.42pt)$) -- ($(seuainw)+(520.02pt,-408.42pt)$);
-          \draw ($(seuainw)+(89.10pt,-585.54pt)$) -- ($(seuainw)+(520.02pt,-585.54pt)$);
-          \draw ($(seuainw)+(89.10pt,-690.30pt)$) -- ($(seuainw)+(520.02pt,-690.30pt)$);
-          \draw ($(seuainw)+(89.10pt,-126.90pt)$) -- ($(seuainw)+(89.10pt,-690.30pt)$);
+          \draw ($(seuainw)+(89.10pt,-\dim_eval:n { 585.54pt - \seu_ai_teacher_raise_dim: })$) -- ($(seuainw)+(520.02pt,-\dim_eval:n { 585.54pt - \seu_ai_teacher_raise_dim: })$);
+          \draw ($(seuainw)+(89.10pt,-\dim_eval:n { 690.30pt - \seu_ai_teacher_raise_dim: })$) -- ($(seuainw)+(520.02pt,-\dim_eval:n { 690.30pt - \seu_ai_teacher_raise_dim: })$);
+          \draw ($(seuainw)+(89.10pt,-126.90pt)$) -- ($(seuainw)+(89.10pt,-\dim_eval:n { 690.30pt - \seu_ai_teacher_raise_dim: })$);
           \draw ($(seuainw)+(174.78pt,-126.90pt)$) -- ($(seuainw)+(174.78pt,-351.18pt)$);
-          \draw ($(seuainw)+(174.78pt,-408.42pt)$) -- ($(seuainw)+(174.78pt,-690.30pt)$);
+          \draw ($(seuainw)+(174.78pt,-408.42pt)$) -- ($(seuainw)+(174.78pt,-\dim_eval:n { 690.30pt - \seu_ai_teacher_raise_dim: })$);
           \draw ($(seuainw)+(289.10pt,-152.46pt)$) -- ($(seuainw)+(289.10pt,-177.66pt)$);
           \draw ($(seuainw)+(289.10pt,-225.18pt)$) -- ($(seuainw)+(289.10pt,-351.18pt)$);
           \draw ($(seuainw)+(384.93pt,-152.46pt)$) -- ($(seuainw)+(384.93pt,-177.66pt)$);
           \draw ($(seuainw)+(427.86pt,-225.18pt)$) -- ($(seuainw)+(427.86pt,-351.18pt)$);
-          \draw ($(seuainw)+(520.02pt,-126.90pt)$) -- ($(seuainw)+(520.02pt,-690.30pt)$);
+          \draw ($(seuainw)+(520.02pt,-126.90pt)$) -- ($(seuainw)+(520.02pt,-\dim_eval:n { 690.30pt - \seu_ai_teacher_raise_dim: })$);
         }
         {
           \str_if_eq:eeTF { \tl_use:N \g_seu_ai_used_tl } { yes }
             {
               \draw ($(seuainw)+(89.10pt,-351.18pt)$) -- ($(seuainw)+(520.02pt,-351.18pt)$);
-              \draw ($(seuainw)+(89.10pt,-528.30pt)$) -- ($(seuainw)+(520.02pt,-528.30pt)$);
-              \draw ($(seuainw)+(89.10pt,-633.06pt)$) -- ($(seuainw)+(520.02pt,-633.06pt)$);
-              \draw ($(seuainw)+(89.10pt,-126.90pt)$) -- ($(seuainw)+(89.10pt,-633.06pt)$);
-              \draw ($(seuainw)+(174.78pt,-126.90pt)$) -- ($(seuainw)+(174.78pt,-633.06pt)$);
+              \draw ($(seuainw)+(89.10pt,-\dim_eval:n { 528.30pt - \seu_ai_teacher_raise_dim: })$) -- ($(seuainw)+(520.02pt,-\dim_eval:n { 528.30pt - \seu_ai_teacher_raise_dim: })$);
+              \draw ($(seuainw)+(89.10pt,-\dim_eval:n { 633.06pt - \seu_ai_teacher_raise_dim: })$) -- ($(seuainw)+(520.02pt,-\dim_eval:n { 633.06pt - \seu_ai_teacher_raise_dim: })$);
+              \draw ($(seuainw)+(89.10pt,-126.90pt)$) -- ($(seuainw)+(89.10pt,-\dim_eval:n { 633.06pt - \seu_ai_teacher_raise_dim: })$);
+              \draw ($(seuainw)+(174.78pt,-126.90pt)$) -- ($(seuainw)+(174.78pt,-\dim_eval:n { 633.06pt - \seu_ai_teacher_raise_dim: })$);
               \draw ($(seuainw)+(289.10pt,-152.46pt)$) -- ($(seuainw)+(289.10pt,-177.66pt)$);
               \draw ($(seuainw)+(289.10pt,-225.18pt)$) -- ($(seuainw)+(289.10pt,-351.18pt)$);
               \draw ($(seuainw)+(384.93pt,-152.46pt)$) -- ($(seuainw)+(384.93pt,-177.66pt)$);
               \draw ($(seuainw)+(427.86pt,-225.18pt)$) -- ($(seuainw)+(427.86pt,-351.18pt)$);
-              \draw ($(seuainw)+(520.02pt,-126.90pt)$) -- ($(seuainw)+(520.02pt,-633.06pt)$);
+              \draw ($(seuainw)+(520.02pt,-126.90pt)$) -- ($(seuainw)+(520.02pt,-\dim_eval:n { 633.06pt - \seu_ai_teacher_raise_dim: })$);
             }
             {
               \draw ($(seuainw)+(89.10pt,-282.42pt)$) -- ($(seuainw)+(520.02pt,-282.42pt)$);
-              \draw ($(seuainw)+(89.10pt,-459.54pt)$) -- ($(seuainw)+(520.02pt,-459.54pt)$);
-              \draw ($(seuainw)+(89.10pt,-564.30pt)$) -- ($(seuainw)+(520.02pt,-564.30pt)$);
-              \draw ($(seuainw)+(89.10pt,-126.90pt)$) -- ($(seuainw)+(89.10pt,-564.30pt)$);
+              \draw ($(seuainw)+(89.10pt,-\dim_eval:n { 459.54pt - \seu_ai_teacher_raise_dim: })$) -- ($(seuainw)+(520.02pt,-\dim_eval:n { 459.54pt - \seu_ai_teacher_raise_dim: })$);
+              \draw ($(seuainw)+(89.10pt,-\dim_eval:n { 564.30pt - \seu_ai_teacher_raise_dim: })$) -- ($(seuainw)+(520.02pt,-\dim_eval:n { 564.30pt - \seu_ai_teacher_raise_dim: })$);
+              \draw ($(seuainw)+(89.10pt,-126.90pt)$) -- ($(seuainw)+(89.10pt,-\dim_eval:n { 564.30pt - \seu_ai_teacher_raise_dim: })$);
               \draw ($(seuainw)+(174.78pt,-126.90pt)$) -- ($(seuainw)+(174.78pt,-225.18pt)$);
-              \draw ($(seuainw)+(174.78pt,-282.42pt)$) -- ($(seuainw)+(174.78pt,-564.30pt)$);
+              \draw ($(seuainw)+(174.78pt,-282.42pt)$) -- ($(seuainw)+(174.78pt,-\dim_eval:n { 564.30pt - \seu_ai_teacher_raise_dim: })$);
               \draw ($(seuainw)+(289.10pt,-152.46pt)$) -- ($(seuainw)+(289.10pt,-177.66pt)$);
               \draw ($(seuainw)+(384.93pt,-152.46pt)$) -- ($(seuainw)+(384.93pt,-177.66pt)$);
-              \draw ($(seuainw)+(520.02pt,-126.90pt)$) -- ($(seuainw)+(520.02pt,-564.30pt)$);
+              \draw ($(seuainw)+(520.02pt,-126.90pt)$) -- ($(seuainw)+(520.02pt,-\dim_eval:n { 564.30pt - \seu_ai_teacher_raise_dim: })$);
             }
         }
 
@@ -1469,11 +1529,11 @@
             at ($(seuainw)+(131.94pt,-237.78pt)$)
             {{\seuaiheaderfont 工具、版本号}};
           \node[anchor=center,inner\c_space_tl sep=0pt,text\c_space_tl width=111.60pt,align=center]
-            at ($(seuainw)+(235.80pt,-238.99pt)$)
-            {{\seuaiheaderfont 使用范围}};
+            at ($(seuainw)+(229.80pt,-238.99pt)$)
+            {{\seuaiheaderfont 使\kern-0.025em用\kern-0.025em范\kern-0.025em围}};
           \node[anchor=center,inner\c_space_tl sep=0pt,text\c_space_tl width=141.48pt,align=center]
-            at ($(seuainw)+(365.07pt,-238.99pt)$)
-            {{\seuaiheaderfont 使用过程}};
+            at ($(seuainw)+(359.07pt,-238.99pt)$)
+            {{\seuaiheaderfont 使\kern-0.025em用\kern-0.025em过\kern-0.025em程}};
           \node[anchor=center,inner\c_space_tl sep=0pt,text\c_space_tl width=92.16pt,align=center]
             at ($(seuainw)+(473.94pt,-237.78pt)$)
             {{\seuaiheaderfont 章节（页码）}};
@@ -1540,15 +1600,13 @@
         {
           \str_if_eq:eeT { \tl_use:N \g_seu_ai_used_tl } { yes }
             {
-              \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
-                at ($(seuainw)+(183.20pt,-260.74pt)$)
-                {{\seu_ai_plain_box:nn { 89.00pt } { \seuaibodylongfont \seu_ai_yes_scope_block: }}};
+              \seu_ai_draw_yes_blocks:
             }
           \str_if_eq:eeT { \tl_use:N \g_seu_ai_used_tl } { no }
             {
               \node[anchor=north\c_space_tl west,inner\c_space_tl sep=0pt]
-                at ($(seuainw)+(94.82pt,-235.74pt)$)
-                {{\seu_ai_plain_box:nn { 414.00pt } { \seuaibodyfont \seu_ai_no_statement_text: }}};
+                at ($(seuainw)+(94.82pt,-240.74pt)$)
+                {{\seu_ai_plain_box:nn { 422.00pt } { \seuaibodyfont \seu_ai_no_statement_text: }}};
             }
         };
 
@@ -1560,12 +1618,12 @@
         {
           \str_if_eq:eeTF { \tl_use:N \g_seu_ai_used_tl } { yes }
             {
-              \seu_ai_draw_student_statement:n { -40.00pt }
-              \seu_ai_draw_teacher_statement:n { -40.00pt }
+              \seu_ai_draw_student_statement:n { -58.00pt }
+              \seu_ai_draw_teacher_statement:n { -58.00pt }
             }
             {
-              \seu_ai_draw_student_statement:n { -110.00pt }
-              \seu_ai_draw_teacher_statement:n { -110.00pt }
+              \seu_ai_draw_student_statement:n { -128.00pt }
+              \seu_ai_draw_teacher_statement:n { -128.00pt }
             }
         };
     \end{tikzpicture}
@@ -1622,22 +1680,43 @@
     \null
   }
 
+\cs_set:Npn \seu_ai_item_row:nnnnn #1#2#3#4#5
+  {
+    \noindent
+    {\seuaiheaderfont 工具、版本号：}
+    \tl_if_blank:nTF {#1} { 未填写 } { #1 }
+    \par
+    {\seuaiheaderfont 使用范围：} #3 \par
+    {\seuaiheaderfont 使用过程：} #4 \par
+    {\seuaiheaderfont 章节（页码）：} #5
+    \par\medskip
+  }
+
+\cs_set:Npn \seu_ai_item_table_row:nnnnn #1#2#3#4#5
+  {
+    \parbox[c]{3.023cm}{\RaggedRight #1} & #3 & #4 & #5 \\
+    \hline
+  }
+
 \NewDocumentCommand{\seusetup}{m}
   { \keys_set:nn { seu/setup } { #1 } }
 
-\NewDocumentCommand{\seuaiitem}{m}
+\NewDocumentCommand{\seuaiitem}{+m}
   {
     \tl_clear:N \l_seu_ai_tool_tl
     \tl_clear:N \l_seu_ai_version_tl
+    \tl_clear:N \l_seu_ai_tool_version_tl
+    \tl_clear:N \l_seu_ai_tool_entry_tl
     \tl_clear:N \l_seu_ai_scope_tl
     \tl_clear:N \l_seu_ai_process_tl
     \tl_clear:N \l_seu_ai_pages_tl
     \keys_set:nn { seu/aiitem } { #1 }
+    \seu_ai_prepare_tool_entry:
     \seq_gput_right:Nx \g_seu_ai_items_seq
       {
         \exp_not:N \seu_ai_item_table_row:nnnnn
-          { \exp_not:V \l_seu_ai_tool_tl }
-          { \exp_not:V \l_seu_ai_version_tl }
+          { \exp_not:V \l_seu_ai_tool_entry_tl }
+          { }
           { \exp_not:V \l_seu_ai_scope_tl }
           { \exp_not:V \l_seu_ai_process_tl }
           { \exp_not:V \l_seu_ai_pages_tl }
@@ -1645,17 +1724,16 @@
     \seq_gput_right:Nx \g_seu_ai_text_items_seq
       {
         \exp_not:N \seu_ai_item_row:nnnnn
-          { \exp_not:V \l_seu_ai_tool_tl }
-          { \exp_not:V \l_seu_ai_version_tl }
+          { \exp_not:V \l_seu_ai_tool_entry_tl }
+          { }
           { \exp_not:V \l_seu_ai_scope_tl }
           { \exp_not:V \l_seu_ai_process_tl }
           { \exp_not:V \l_seu_ai_pages_tl }
       }
-    \exp_args:Nx \tl_if_blank:nF
-      { \seu_tool_version:nn { \l_seu_ai_tool_tl } { \l_seu_ai_version_tl } }
+    \tl_if_blank:VF \l_seu_ai_tool_entry_tl
       {
         \seu_tl_append_par:Nx \g_seu_ai_tool_display_tl
-          { \seu_tool_version:nn { \l_seu_ai_tool_tl } { \l_seu_ai_version_tl } }
+          { \l_seu_ai_tool_entry_tl }
       }
     \tl_if_blank:VF \l_seu_ai_scope_tl
       { \seu_tl_append_par:Nx \g_seu_ai_scope_display_tl { \l_seu_ai_scope_tl } }
@@ -1746,7 +1824,7 @@
 \newcommand{\seuaititlefont}{\seuboldheiti\fontsize{16pt}{18pt}\selectfont}
 \newcommand{\seuaiheaderfont}{\seuboldheiti\fontsize{12pt}{12pt}\selectfont}
 \newcommand{\seuaibodyfont}{\songti\fontsize{10.5pt}{12pt}\selectfont}
-\newcommand{\seuaibodylongfont}{\songti\fontsize{10.5pt}{13.9pt}\selectfont}
+\newcommand{\seuaibodylongfont}{\songti\fontsize{10.5pt}{11.5pt}\selectfont}
 \newcommand{\seuaiboldvaluefont}{\seuboldheiti\fontsize{12pt}{12pt}\selectfont}
 \newcommand{\seuaiboldsongvaluefont}{\seuboldsongti\fontsize{12pt}{12pt}\selectfont}
 \newcommand{\seuaiboldsubjectfont}{\seuboldsongti\fontsize{10.5pt}{12pt}\selectfont}

@@ -33,6 +33,6 @@ latexmk -c
 - The class now provides `\seumakechineseabstract`, `\seumakeenglishabstract`, `\seumaketableofcontents`, and `\seuprintbibliography`.
 - Chinese and English abstract body text should be edited in `content/abstract_zh.tex` and `content/abstract_en.tex`; keywords should be added with `\addkey{中文关键词}{EnglishKeyword}` in the preamble.
 - Date fields in `\seusetup` should use numeric input such as `2026-4-10`; the class renders `年 / 月 / 日` automatically on the cover, statement pages, and AI statement page.
-- AI usage rows can be appended with `\seuaiitem{tool=..., version=..., scope=..., process=..., pages=...}`.
+- AI usage rows can be appended with `\seuaiitem{tool_version=..., scope=..., process=..., pages=...}`. The old `tool=..., version=...` form is still supported for compatibility.
 - `main.pdf` is a full regression sample covering cover, declarations, AI statement, abstracts, TOC, body, figures, tables, equations, references, appendix, acknowledgements, and the final motto page.
 - `imgs/cover-2.png` is reserved for the final page "止于至善" resource, not for the cover overlay.
