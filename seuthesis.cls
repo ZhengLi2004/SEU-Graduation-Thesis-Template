@@ -71,6 +71,7 @@
 \tl_new:N \g_seu_authorization_author_date_tl
 \tl_new:N \g_seu_authorization_supervisor_date_tl
 \tl_new:N \g_seu_ai_used_tl
+\tl_new:N \g_seu_ai_checkbox_style_tl
 \tl_new:N \g_seu_ai_scope_tl
 \tl_new:N \g_seu_ai_subject_tl
 \tl_new:N \g_seu_ai_student_date_tl
@@ -117,6 +118,7 @@
 \tl_gset:Nn \g_seu_signature_student_image_tl { }
 \tl_gset:Nn \g_seu_signature_teacher_image_tl { }
 \tl_gset:Nn \g_seu_ai_used_tl { unset }
+\tl_gset:Nn \g_seu_ai_checkbox_style_tl { checkedbox }
 \tl_const:Nn \c_seu_abstract_zh_file_tl { content/abstract_zh.tex }
 \tl_const:Nn \c_seu_abstract_en_file_tl { content/abstract_en.tex }
 
@@ -149,6 +151,11 @@
     ai_used / unset .code:n = { \tl_gset:Nn \g_seu_ai_used_tl { unset } },
     ai_used / yes .code:n = { \tl_gset:Nn \g_seu_ai_used_tl { yes } },
     ai_used / no .code:n = { \tl_gset:Nn \g_seu_ai_used_tl { no } },
+    ai_checkbox_style .choice:,
+    ai_checkbox_style / checkedbox .code:n =
+      { \tl_gset:Nn \g_seu_ai_checkbox_style_tl { checkedbox } },
+    ai_checkbox_style / blacksquare .code:n =
+      { \tl_gset:Nn \g_seu_ai_checkbox_style_tl { blacksquare } },
     ai_used .initial:n = unset,
   }
 
@@ -865,7 +872,7 @@
 \cs_new:Npn \seu_display_or_date_placeholder:N #1
   { \tl_if_blank:VTF #1 { \seu_date_placeholder: } { \tl_use:N #1 } }
 
-\cs_new_protected:Npn \seu_checkbox_checked:
+\cs_new_protected:Npn \seu_checkbox_checkedbox:
   {
     \hbox_set:Nn \l_tmpa_box { $\square$ }
     \makebox[\dim_eval:n { \box_wd:N \l_tmpa_box }][c]
@@ -888,8 +895,20 @@
       }
   }
 
+\ProvideDocumentCommand{\checkedbox}{}{\seu_checkbox_checkedbox:}
+
+\cs_new:Npn \seu_checkbox_unchecked:
+  { \ensuremath{\square} }
+
+\cs_new:Npn \seu_checkbox_checked:
+  {
+    \str_if_eq:eeTF { \tl_use:N \g_seu_ai_checkbox_style_tl } { blacksquare }
+      { \ensuremath{\blacksquare} }
+      { \checkedbox }
+  }
+
 \cs_new:Npn \seu_checkbox:nn #1#2
-  { \tl_if_eq:nnTF {#1} {#2} { \seu_checkbox_checked: } { \ensuremath{\square} } }
+  { \tl_if_eq:nnTF {#1} {#2} { \seu_checkbox_checked: } { \seu_checkbox_unchecked: } }
 
 \cs_new:Npn \seu_yes_box:
   { \exp_args:NV \seu_checkbox:nn \g_seu_ai_used_tl { yes } }
@@ -1186,7 +1205,7 @@
 
 \cs_new:Npn \seu_ai_scope_box:N #1
   {
-    \bool_if:NTF #1 { \seu_checkbox_checked: } { \ensuremath{\square} }
+    \bool_if:NTF #1 { \seu_checkbox_checked: } { \seu_checkbox_unchecked: }
     \nobreak\hspace{0.33em}
     \ignorespaces
   }
@@ -2073,7 +2092,9 @@
 \setlength{\cftsubsecindent}{6\ccwd}
 \setlength{\cftchapnumwidth}{3.4\ccwd}
 \setlength{\cftsecnumwidth}{1.85\ccwd}
-\setlength{\cftsubsecnumwidth}{4.0\ccwd}
+\setlength{\cftsubsecnumwidth}{3.0\ccwd}
+\renewcommand{\cftsubsecpresnum}{}
+\renewcommand{\cftsubsecaftersnum}{\hspace{0.5em}}
 
 \DeclareCaptionFont{seucaptionfont}{\songti\seuwuhao\selectfont}
 \captionsetup{

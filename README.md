@@ -240,6 +240,12 @@ xelatex -interaction=nonstopmode -file-line-error -synctex=1 main.tex
 
   如果 `ai_used = yes` 但没有填写 `ai_scope`，模板会直接报错。
 
+- `ai_checkbox_style`
+  控制 AI 使用情况说明表中“已选中”方框的样式。
+  可选值：
+  - `checkedbox`：方框内打勾
+  - `blacksquare`：实心方块
+
 - `ai_teacher_comment`
   指导教师意见内容。
   可以先留空，打印后手写；也可以直接填写文字。
@@ -277,6 +283,7 @@ xelatex -interaction=nonstopmode -file-line-error -synctex=1 main.tex
   authorization_supervisor_date = {2026-04-10},
   ai_used                       = yes,
   ai_scope                      = {12},
+  ai_checkbox_style             = checkedbox,
   signature_student_image       = {imgs/zhangsan.png},
   signature_teacher_image       = {imgs/zhangsanfeng.png},
   ai_student_date               = {2026-04-10},
