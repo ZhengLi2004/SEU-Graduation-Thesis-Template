@@ -1,6 +1,6 @@
 # 东南大学本科毕业设计（论文）LaTeX 模板
 
-本仓库提供一套基于 `XeLaTeX` 的东南大学本科毕业设计（论文）模板，以及一份可以直接编译的完整示例。模板当前以 Windows 环境为主要目标，已经覆盖封面、声明页、AI 使用情况说明表、摘要、目录、正文、参考文献、附录、致谢与末页。
+本仓库提供一套基于 `XeLaTeX` 的东南大学本科毕业设计（论文）模板，以及一份可以直接编译的完整示例。模板已在 Windows 与 macOS 环境下验证通过，已经覆盖封面、声明页、AI 使用情况说明表、摘要、目录、正文、参考文献、附录、致谢与末页。
 
 ## 目录结构
 
@@ -32,7 +32,7 @@
 
 1. 安装 `TeX Live 2025`，并确保其中包含 `xelatex`、`latexmk`、`biblatex`、`biber`。
 2. 将 TeX Live 的可执行文件目录加入系统 `PATH`，使得终端可以直接运行 `xelatex`、`latexmk`、`biber`。
-3. 确认系统已安装模板依赖的 Windows 字体。
+3. 确认系统已安装模板依赖的字体（Windows 下需要 SimSun / SimHei / KaiTi / FangSong；macOS 自动回退到系统自带的 Songti SC / STHeitiSC-Medium / Kaiti SC 等）。
 4. 将仓库克隆或解压到本地目录后，在仓库根目录运行编译命令。
 
 建议安装完成后先做一次自检：
@@ -59,20 +59,21 @@ biber --version
 
 ### 字体依赖
 
-模板采用严格字体匹配策略，按以下顺序查找字体（优先 Windows 名称，其次 macOS 名称）：
+模板采用严格字体匹配策略，按以下顺序逐级回退（优先 Windows 名称，其次 macOS 系统字体）：
 
 | 用途 | Windows | macOS 回退 |
 |------|---------|-----------|
 | 宋体 | `SimSun` / `宋体` | `Songti SC` |
-| 黑体 | `SimHei` / `黑体` | `Heiti SC` |
+| 黑体 | `SimHei` / `黑体` | `STHeitiSC-Medium` |
 | 楷体 | `KaiTi` / `楷体` | `Kaiti SC` |
 | 仿宋 | `FangSong` / `仿宋` | `STFangsong` |
 | 西文 | `Times New Roman` | `Times New Roman` |
 
 注意事项：
 
-- 由于版权、授权和分发限制，本仓库**不打包**上述商业 / 系统字体。
+- 由于版权、授权和分发限制，本仓库**不打包**上述商业 / 系统字体，全部按字体名从系统查找。
 - 如果缺少这些字体，模板会在编译时直接报错，而不是静默替换为其他字体。
+- macOS 下直接用家族名 `Heiti SC` 会命中 Light 字重，与 Windows 上的 SimHei 粗细差距较大；因此模板显式使用 PostScript 名 `STHeitiSC-Medium` 加载 Medium 字重。
 - macOS 下仿宋字体 (`STFangsong`) 可能未预装，如缺少可忽略或自行安装。
 
 ### 编译配置
@@ -435,7 +436,29 @@ ai_scope = {1}
 
 关闭占用文件的程序后重新编译即可。
 
+## Roadmap
+
+以下是计划中或欢迎社区贡献的方向，欢迎通过 Issue / PR 讨论：
+
+### 环境兼容
+- [x] Windows 字体严格匹配
+- [x] macOS 系统字体自动回退（Songti SC / STHeitiSC-Medium / Kaiti SC / STFangsong）
+- [ ] Linux 下开源字体回退方案（如思源宋体 / 思源黑体 / Noto CJK 等，通过 `fonts/` 目录打包分发）
+- [ ] 在 CI 中加入跨平台编译冒烟测试（Windows / macOS / Ubuntu）
+
+### 模板能力
+- [ ] 封面长标题自动换行 / 自动缩小字号
+- [ ] 研究生学位论文版本（硕士 / 博士）
+- [ ] 英文论文模式
+- [ ] 更多学院的封面定制与校徽变体
+- [ ] 目录 / 参考文献 / 图表格式与最新 SEU Word 模板的增量对齐
+
+### 文档与示例
+- [ ] 英文版 README
+- [ ] FAQ 扩充（常见 bib 报错、图片路径、目录不更新等）
+- [ ] 提供一份最小骨架（去掉示例章节内容的干净起点）
+
 ## 备注
 
 - `main.pdf` 是当前示例文档的编译产物，不是模板说明文档
-- 模板已支持 Windows 和 macOS 字体自动回退；Linux 用户请自行处理字体兼容问题
+- 模板已支持 Windows 和 macOS 字体自动回退；Linux 下的开源字体回退方案尚在 Roadmap 中，当前需用户自行处理
