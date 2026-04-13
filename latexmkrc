@@ -1,4 +1,3 @@
-$pdf_mode = 1;
-$pdflatex = 'xelatex -interaction=nonstopmode -file-line-error -synctex=1 %O %S';
-$bibtex = 'bibtex %O %B';
+$pdf_mode = 5;
+$xelatex = 'xelatex -interaction=nonstopmode -file-line-error -synctex=1 %O %S';
 $biber = 'biber %O %B';

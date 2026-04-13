@@ -13,14 +13,13 @@
 - `content/acknowledgements.tex`：致谢示例
 - `bib/references.bib`：参考文献数据库
 - `imgs/`：模板图片、签名图片等资源
-- `docs/`：学校原始参考模板 PDF / Word 资料
 - `latexmkrc`：推荐编译配置
 
 ## 环境配置
 
 ### 推荐环境
 
-当前模板建议在 Windows 10 / 11 上使用，推荐直接使用 TeX Live 2025，并通过 `latexmk + XeLaTeX + biber` 编译。
+推荐使用 TeX Live 2025 及以上版本，并通过 `latexmk + XeLaTeX + biber` 编译。模板支持 Windows 和 macOS（通过 Songti SC / Heiti SC 等系统字体回退）。
 
 本机实测环境如下：
 - `latexmk`：`4.86a`
@@ -53,42 +52,42 @@ biber --version
 - 编译引擎：XeLaTeX
 - 构建工具：latexmk 4.86a 或同代版本
 - 文献工具：biber 2.20 或兼容版本
-- 字体：`Times New Roman`、`SimSun`、`SimHei`、`KaiTi`、`FangSong`
+- 字体：`Times New Roman`、`SimSun`、`SimHei`、`KaiTi`、`FangSong`（macOS 下自动回退到 `Songti SC`、`Heiti SC`、`Kaiti SC`、`STFangsong`）
 - 仓库内编译配置：使用项目自带的 `latexmkrc`
 
-如果你的环境与上述差异较大，例如改用 macOS、Linux、MiKTeX 或非 Windows 中易字体替代方案，请预期自行处理字体兼容与行距差异。
+如果你的环境与上述差异较大，例如改用 Linux、MiKTeX 或非系统自带字体方案，请预期自行处理字体兼容与行距差异。
 
 ### 字体依赖
 
-模板当前采用严格字体匹配策略，默认依赖 Windows 系统中的以下字体：
+模板采用严格字体匹配策略，按以下顺序查找字体（优先 Windows 名称，其次 macOS 名称）：
 
-- `Times New Roman`
-- `SimSun` / `宋体`
-- `SimHei` / `黑体`
-- `KaiTi` / `楷体`
-- `FangSong` / `仿宋`
+| 用途 | Windows | macOS 回退 |
+|------|---------|-----------|
+| 宋体 | `SimSun` / `宋体` | `Songti SC` |
+| 黑体 | `SimHei` / `黑体` | `Heiti SC` |
+| 楷体 | `KaiTi` / `楷体` | `Kaiti SC` |
+| 仿宋 | `FangSong` / `仿宋` | `STFangsong` |
+| 西文 | `Times New Roman` | `Times New Roman` |
 
 注意事项：
 
-- 这些字体依赖于 Windows 系统环境。
-- 由于版权、授权和分发限制，本仓库**不打包**上述 Windows 商业 / 系统字体。
+- 由于版权、授权和分发限制，本仓库**不打包**上述商业 / 系统字体。
 - 如果缺少这些字体，模板会在编译时直接报错，而不是静默替换为其他字体。
-- 最稳妥的方案是直接在安装了上述字体的 Windows 环境中编译。
+- macOS 下仿宋字体 (`STFangsong`) 可能未预装，如缺少可忽略或自行安装。
 
 ### 编译配置
 
 仓库内置的 `latexmkrc` 内容如下：
 
 ```perl
-$pdf_mode = 1;
-$pdflatex = 'xelatex -interaction=nonstopmode -file-line-error -synctex=1 %O %S';
-$bibtex = 'bibtex %O %B';
+$pdf_mode = 5;
+$xelatex = 'xelatex -interaction=nonstopmode -file-line-error -synctex=1 %O %S';
 $biber = 'biber %O %B';
 ```
 
 含义如下：
 
-- 主编译引擎固定为 `xelatex`
+- `$pdf_mode = 5` 指定使用 `xelatex` 作为编译引擎
 - 开启 `-file-line-error`，便于定位错误行号
 - 开启 `-synctex=1`，方便编辑器反向跳转
 - 参考文献由 `biber` 处理
@@ -392,7 +391,7 @@ xelatex -interaction=nonstopmode -file-line-error -synctex=1 main.tex
 Required font 'SimSun or 宋体' not found
 ```
 
-说明当前系统缺少模板要求的 Windows 字体。请在 Windows 环境安装相应字体后再编译。
+说明当前系统缺少模板要求的字体。Windows 用户请确认系统已安装对应字体；macOS 用户请确认 Songti SC / Heiti SC 等系统字体可用。
 
 ### 2. 参考文献不出现或引用编号不对
 
@@ -439,4 +438,4 @@ ai_scope = {1}
 ## 备注
 
 - `main.pdf` 是当前示例文档的编译产物，不是模板说明文档
-- 模板目前更适合在 Windows 上直接使用；如果你准备迁移到 macOS / Linux，请预留时间自行处理字体兼容问题
+- 模板已支持 Windows 和 macOS 字体自动回退；Linux 用户请自行处理字体兼容问题

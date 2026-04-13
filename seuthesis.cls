@@ -22,7 +22,6 @@
 \RequirePackage{setspace}
 \RequirePackage{xcolor}
 \RequirePackage{hyperref}
-\RequirePackage{xparse}
 \RequirePackage{expl3}
 \RequirePackage{eso-pic}
 \RequirePackage{tikz}
@@ -306,12 +305,16 @@
     \IfFontExistsTF { SimHei }
       { \setCJKfamilyfont { seucovershmedium } { SimHei } }
       {
-        \IfFontExistsTF { 黑体 }
-          { \setCJKfamilyfont { seucovershmedium } { 黑体 } }
+        \IfFontExistsTF { STHeitiSC-Medium }
+          { \setCJKfamilyfont { seucovershmedium } { STHeitiSC-Medium } }
           {
-            \seu_font_missing_error:nn
-              { SimHei~or~黑体 }
-              {system-font-name~lookup~only}
+            \IfFontExistsTF { 黑体 }
+              { \setCJKfamilyfont { seucovershmedium } { 黑体 } }
+              {
+                \seu_font_missing_error:nn
+                  { SimHei~or~STHeitiSC-Medium~or~黑体 }
+                  {system-font-name~lookup~only}
+              }
           }
       }
   }
@@ -324,15 +327,22 @@
         \setCJKfamilyfont { seuheadingbold } [ AutoFakeBold = { 4.5 } ] { SimHei }
       }
       {
-        \IfFontExistsTF { 黑体 }
+        \IfFontExistsTF { STHeitiSC-Medium }
           {
-            \setCJKfamilyfont { seuheadingmedium } { 黑体 }
-            \setCJKfamilyfont { seuheadingbold } [ AutoFakeBold = { 4.5 } ] { 黑体 }
+            \setCJKfamilyfont { seuheadingmedium } { STHeitiSC-Medium }
+            \setCJKfamilyfont { seuheadingbold } [ AutoFakeBold = { 4.5 } ] { STHeitiSC-Medium }
           }
           {
-            \seu_font_missing_error:nn
-              { SimHei~or~黑体 }
-              {system-font-name~lookup~only}
+            \IfFontExistsTF { 黑体 }
+              {
+                \setCJKfamilyfont { seuheadingmedium } { 黑体 }
+                \setCJKfamilyfont { seuheadingbold } [ AutoFakeBold = { 4.5 } ] { 黑体 }
+              }
+              {
+                \seu_font_missing_error:nn
+                  { SimHei~or~STHeitiSC-Medium~or~黑体 }
+                  {system-font-name~lookup~only}
+              }
           }
       }
   }
@@ -345,6 +355,7 @@
     % - non-distributable fonts: search system fonts only
     % - distributable fonts: search relative directory fonts/ only
     % Exact fonts required by the Word template.
+    % macOS fallback: Songti SC, Heiti SC, Kaiti SC, STFangsong.
 
     \seu_set_cover_label_font:
     \seu_set_heading_font:
@@ -354,33 +365,49 @@
     \IfFontExistsTF { SimSun }
       { \seu_require_system_cjk_main_font:n { SimSun } }
       {
-        \IfFontExistsTF { 宋体 }
-          { \seu_require_system_cjk_main_font:n { 宋体 } }
-          { \seu_font_missing_error:nn { SimSun~or~宋体 } {system-font-name lookup only} }
+        \IfFontExistsTF { Songti~SC }
+          { \seu_require_system_cjk_main_font:n { Songti~SC } }
+          {
+            \IfFontExistsTF { 宋体 }
+              { \seu_require_system_cjk_main_font:n { 宋体 } }
+              { \seu_font_missing_error:nn { SimSun~or~Songti~SC~or~宋体 } {system-font-name~lookup~only} }
+          }
       }
 
     \IfFontExistsTF { SimSun }
       { \setCJKfamilyfont { seuboldsong } [ AutoFakeBold = { 3.5 } ] { SimSun } }
       {
-        \IfFontExistsTF { 宋体 }
-          { \setCJKfamilyfont { seuboldsong } [ AutoFakeBold = { 3.5 } ] { 宋体 } }
-          { \seu_font_missing_error:nn { SimSun~or~宋体 } {system-font-name lookup only} }
+        \IfFontExistsTF { Songti~SC }
+          { \setCJKfamilyfont { seuboldsong } [ AutoFakeBold = { 3.5 } ] { Songti~SC } }
+          {
+            \IfFontExistsTF { 宋体 }
+              { \setCJKfamilyfont { seuboldsong } [ AutoFakeBold = { 3.5 } ] { 宋体 } }
+              { \seu_font_missing_error:nn { SimSun~or~Songti~SC~or~宋体 } {system-font-name~lookup~only} }
+          }
       }
 
     \IfFontExistsTF { SimHei }
       { \seu_require_system_cjk_sans_font:n { SimHei } }
       {
-        \IfFontExistsTF { 黑体 }
-          { \seu_require_system_cjk_sans_font:n { 黑体 } }
-          { \seu_font_missing_error:nn { SimHei~or~黑体 } {system-font-name lookup only} }
+        \IfFontExistsTF { STHeitiSC-Medium }
+          { \seu_require_system_cjk_sans_font:n { STHeitiSC-Medium } }
+          {
+            \IfFontExistsTF { 黑体 }
+              { \seu_require_system_cjk_sans_font:n { 黑体 } }
+              { \seu_font_missing_error:nn { SimHei~or~STHeitiSC-Medium~or~黑体 } {system-font-name~lookup~only} }
+          }
       }
 
     \IfFontExistsTF { KaiTi }
       { \seu_require_system_cjk_family_font:nn { zhkai } { KaiTi } }
       {
-        \IfFontExistsTF { 楷体 }
-          { \seu_require_system_cjk_family_font:nn { zhkai } { 楷体 } }
-          { \seu_font_missing_error:nn { KaiTi~or~楷体 } {system-font-name lookup only} }
+        \IfFontExistsTF { Kaiti~SC }
+          { \seu_require_system_cjk_family_font:nn { zhkai } { Kaiti~SC } }
+          {
+            \IfFontExistsTF { 楷体 }
+              { \seu_require_system_cjk_family_font:nn { zhkai } { 楷体 } }
+              { \seu_font_missing_error:nn { KaiTi~or~Kaiti~SC~or~楷体 } {system-font-name~lookup~only} }
+          }
       }
 
     \IfFontExistsTF { FangSong }
@@ -389,12 +416,19 @@
         \setCJKfamilyfont { zhfs } { FangSong }
       }
       {
-        \IfFontExistsTF { 仿宋 }
+        \IfFontExistsTF { STFangsong }
           {
-            \setCJKmonofont { 仿宋 }
-            \setCJKfamilyfont { zhfs } { 仿宋 }
+            \setCJKmonofont { STFangsong }
+            \setCJKfamilyfont { zhfs } { STFangsong }
           }
-          { \seu_font_missing_error:nn { FangSong~or~仿宋 } {system-font-name lookup only} }
+          {
+            \IfFontExistsTF { 仿宋 }
+              {
+                \setCJKmonofont { 仿宋 }
+                \setCJKfamilyfont { zhfs } { 仿宋 }
+              }
+              { \seu_font_missing_error:nn { FangSong~or~STFangsong~or~仿宋 } {system-font-name~lookup~only} }
+          }
       }
   }
 
@@ -1918,7 +1952,11 @@
 \providecommand{\fangsong}{\CJKfamily{zhfs}}
 \IfFontExistsTF{KaiTi}
   { \newfontfamily\seucoverdatefamily{KaiTi} }
-  { \newfontfamily\seucoverdatefamily{楷体} }
+  {
+    \IfFontExistsTF{Kaiti SC}
+      { \newfontfamily\seucoverdatefamily{Kaiti SC} }
+      { \newfontfamily\seucoverdatefamily{楷体} }
+  }
 
 \makeatletter
 \@onlypreamble\addkey
@@ -2110,9 +2148,9 @@
 
 \counterwithin{figure}{chapter}
 \counterwithin{table}{chapter}
-\numberwithin{equation}{chapter}
+\counterwithin{equation}{chapter}
 \renewcommand{\thefigure}{\arabic{chapter}-\arabic{figure}}
-\renewcommand{\thetable}{\arabic{chapter}.\arabic{table}}
+\renewcommand{\thetable}{\arabic{chapter}-\arabic{table}}
 \renewcommand{\theequation}{\arabic{chapter}.\arabic{equation}}
 \renewcommand{\thesubfigure}{(\alph{subfigure})}
 \renewcommand{\thesubtable}{(\alph{subtable})}
