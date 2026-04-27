@@ -112,7 +112,7 @@
 \tl_gset:Nn \g_seu_image_path_tl { imgs/ }
 \tl_gset:Nn \g_seu_logo_image_tl { logo.png }
 \tl_gset:Nn \g_seu_degree_image_tl { degree.jpg }
-\tl_gset:Nn \g_seu_cover_bg_image_tl { cover-1.png }
+\tl_gset:Nn \g_seu_cover_bg_image_tl { cover-1.pdf }
 \tl_gset:Nn \g_seu_motto_image_tl { cover-2.png }
 \tl_gset:Nn \g_seu_signature_student_image_tl { }
 \tl_gset:Nn \g_seu_signature_teacher_image_tl { }
