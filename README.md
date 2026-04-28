@@ -61,13 +61,13 @@ biber --version
 
 模板采用严格字体匹配策略，按以下顺序查找字体（优先 Windows 名称，其次 macOS 名称）：
 
-| 用途 | Windows | macOS 回退 |
-|------|---------|-----------|
-| 宋体 | `SimSun` / `宋体` | `Songti SC` |
-| 黑体 | `SimHei` / `黑体` | `Heiti SC` |
-| 楷体 | `KaiTi` / `楷体` | `Kaiti SC` |
-| 仿宋 | `FangSong` / `仿宋` | `STFangsong` |
-| 西文 | `Times New Roman` | `Times New Roman` |
+| 用途 | Windows             | macOS 回退        |
+| ---- | ------------------- | ----------------- |
+| 宋体 | `SimSun` / `宋体`   | `Songti SC`       |
+| 黑体 | `SimHei` / `黑体`   | `Heiti SC`        |
+| 楷体 | `KaiTi` / `楷体`    | `Kaiti SC`        |
+| 仿宋 | `FangSong` / `仿宋` | `STFangsong`      |
+| 西文 | `Times New Roman`   | `Times New Roman` |
 
 注意事项：
 
@@ -81,7 +81,7 @@ biber --version
 
 ```perl
 $pdf_mode = 5;
-$xelatex = 'xelatex -interaction=nonstopmode -file-line-error -synctex=0 %O %S';
+$xelatex = 'xelatex -interaction=nonstopmode -file-line-error -halt-on-error -synctex=0 %O %S';
 $biber = 'biber %O %B';
 ```
 
@@ -89,6 +89,7 @@ $biber = 'biber %O %B';
 
 - `$pdf_mode = 5` 指定使用 `xelatex` 作为编译引擎
 - 开启 `-file-line-error`，便于定位错误行号
+- 开启 `-halt-on-error`，失败时尽快停止，成功编译结果不变
 - 默认使用 `-synctex=0`，减少日常编译生成和维护 SyncTeX 文件的开销
 - 参考文献由 `biber` 处理
 
@@ -103,7 +104,7 @@ latexmk -xelatex main.tex
 如果需要编辑器反向跳转，可临时覆盖 `latexmkrc` 中的 XeLaTeX 命令：
 
 ```powershell
-latexmk -xelatex -e '$xelatex = q/xelatex -interaction=nonstopmode -file-line-error -synctex=1 %O %S/' main.tex
+latexmk -xelatex -e '$xelatex = q/xelatex -interaction=nonstopmode -file-line-error -halt-on-error -synctex=1 %O %S/' main.tex
 ```
 
 强制全量重编译仅建议在清理缓存、排查异常或定稿前使用，不要作为日常编译命令：
@@ -121,10 +122,10 @@ latexmk -c
 如果需要手动编译，推荐顺序为：
 
 ```powershell
-xelatex -interaction=nonstopmode -file-line-error -synctex=0 main.tex
+xelatex -interaction=nonstopmode -file-line-error -halt-on-error -synctex=0 main.tex
 biber main
-xelatex -interaction=nonstopmode -file-line-error -synctex=0 main.tex
-xelatex -interaction=nonstopmode -file-line-error -synctex=0 main.tex
+xelatex -interaction=nonstopmode -file-line-error -halt-on-error -synctex=0 main.tex
+xelatex -interaction=nonstopmode -file-line-error -halt-on-error -synctex=0 main.tex
 ```
 
 ## 使用说明
